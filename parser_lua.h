@@ -49,7 +49,9 @@ typedef enum {
   P_OR_ELSE,
   P_PRED,
   P_ONE_OR_MORE,
-  P_ZERO_OR_MORE
+  P_ZERO_OR_MORE,
+  P_LEFT,
+  P_RIGHT,
 } ParserKind;
 
 struct Parser {
@@ -427,6 +429,117 @@ static Parser *make_pred(lua_State *L, Parser *inner, int func_ref) {
 }
 
 /* ---------------------------
+  left combinator (returns left output)
+  data: left Parser*, right Parser*
+   --------------------------- */
+
+typedef struct {
+  Parser *left;
+  Parser *right;
+} LeftData;
+
+static ParseResult left_parse(Parser *p, const char *input) {
+  LeftData *d = (LeftData *)p->data;
+
+  ParseResult r1 = d->left->parse(d->left, input);
+  if (!r1.ok)
+    return r1;
+
+  ParseResult r2 = d->right->parse(d->right, r1.rest);
+  if (!r2.ok) {
+    // if we are here, that means r1 has succeeded which means it allocated a
+    // memory for it's result which have to free if r2 fails.
+    free(r1.output);
+    return r2;
+  }
+
+  char *left_out = r1.output;
+  const char *rest = r2.rest;
+  free(r2.output); // r2 is right;
+  return parse_ok(rest, left_out);
+}
+
+static void left_destroy(Parser *p) {
+  LeftData *d = (LeftData *)p->data;
+
+  if (d) {
+    if (d->left)
+      parser_unref(d->left);
+    if (d->right)
+      parser_unref(d->right);
+
+    free(d);
+  }
+}
+
+static Parser *make_left(lua_State *L, Parser *left, Parser *right) {
+  LeftData *d = (LeftData *)malloc(sizeof(LeftData));
+
+  d->left = left;
+  parser_ref(left);
+
+  d->right = right;
+  parser_ref(right);
+
+  return parser_new(P_LEFT, left_parse, left_destroy, d, L);
+}
+
+/* ---------------------------
+  right combinator (returns right output)
+  data: left Parser*, right Parser*
+   --------------------------- */
+
+typedef struct {
+  Parser *left;
+  Parser *right;
+} RightData;
+
+static ParseResult right_parse(Parser *p, const char *input) {
+  RightData *d = (RightData *)p->data;
+
+  ParseResult r1 = d->left->parse(d->left, input);
+  if (!r1.ok)
+    return r1;
+
+  ParseResult r2 = d->right->parse(d->right, r1.rest);
+  if (!r2.ok) {
+    free(r1.output);
+    return r2;
+  }
+
+  char *right_out = r2.output;
+  const char *rest = r2.rest;
+
+  free(r1.output);
+  return parse_ok(rest, right_out);
+}
+
+static void right_destroy(Parser *p) {
+  RightData *d = (RightData *)p->data;
+
+  if (d) {
+    if (d->left)
+      parser_unref(d->left);
+    if (d->right)
+      parser_unref(d->right);
+
+    free(d);
+  }
+}
+
+static Parser *make_right(lua_State *L, Parser *left, Parser *right) {
+  RightData *d = (RightData *)malloc(sizeof(RightData));
+
+  d->left = left;
+  parser_ref(left);
+
+  d->right = right;
+  parser_ref(right);
+
+  return parser_new(P_RIGHT, right_parse, right_destroy, d, L);
+}
+
+/* ---------------------------
    repetition combinators
    one_or_more and zero_or_more: they concatenate outputs into one malloc'd
    string
@@ -560,6 +673,12 @@ static void parser_free_internal(Parser *p) {
     break;
   case P_PRED:
     pred_destroy(p);
+    break;
+  case P_LEFT:
+    left_destroy(p);
+    break;
+  case P_RIGHT:
+    right_destroy(p);
     break;
   case P_ONE_OR_MORE:
   case P_ZERO_OR_MORE:
