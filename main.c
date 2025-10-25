@@ -91,6 +91,10 @@ int main() {
     lua_pop(L, lua_gettop(L));
   }
 
+  // running lua scripts
+  if (luaL_dofile(L, "script.lua") == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
   lua_close(L);
   return 0;
 }
