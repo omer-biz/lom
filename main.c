@@ -63,13 +63,33 @@ int main() {
   code = "print(mul(8, 8))";
 
   int ret_status = luaL_dostring(L, code);
-  printf("status: %d", ret_status);
+  printf("status: %d\n", ret_status);
 
   if (ret_status == LUA_OK) {
     lua_pop(L, lua_gettop(L));
   }
 
   // functions with namespaces
+  // namespaces are tables in lua
+  const struct luaL_Reg MyMathLib[] = {{"mul", multiplication}, {NULL, NULL}};
+
+  // crate a table on top of the stack
+  lua_newtable(L);
+
+  // set the 'MyMathLib' to the table on top of the stack
+  luaL_setfuncs(L, MyMathLib, 0);
+
+  // set the table on top to the global variable "MyMath"
+  lua_setglobal(L, "MyMath");
+
+  code = "print(MyMath.mul(7, 8))";
+
+  ret_status = luaL_dostring(L, code);
+  printf("status: %d\n", ret_status);
+
+  if (ret_status == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
 
   lua_close(L);
   return 0;
