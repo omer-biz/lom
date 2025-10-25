@@ -122,6 +122,28 @@ int main() {
     }
   }
 
+  // calling a lua function with c arguments
+  if (luaL_dofile(L, "script4.lua") == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
+
+  // push the function to be called on to the stack
+  lua_getglobal(L, "my_function");
+  if (lua_isfunction(L, -1)) {
+    lua_pushinteger(L, 3);
+    lua_pushinteger(L, 4);
+
+    if (lua_pcall(L, 2, 1, 0) == LUA_OK) {
+      if (lua_isinteger(L, -1)) {
+        int result = lua_tointeger(L, -1);
+
+        lua_pop(L, -1);
+        printf("Result from calling lua function: %d\n", result);
+      }
+      lua_pop(L, lua_gettop(L));
+    }
+  }
+
   lua_close(L);
   return 0;
 }
