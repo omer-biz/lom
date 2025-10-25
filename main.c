@@ -95,6 +95,21 @@ int main() {
   if (luaL_dofile(L, "script.lua") == LUA_OK) {
     lua_pop(L, lua_gettop(L));
   }
+
+  // getting variables from lua
+  if (luaL_dofile(L, "script2.lua") == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
+
+  lua_getglobal(L, "message");
+
+  if (lua_isstring(L, -1)) {
+    const char *message = lua_tostring(L, -1);
+    lua_pop(L, 1);
+
+    printf("Message from lua: %s\n", message);
+  }
+
   lua_close(L);
   return 0;
 }
