@@ -3,6 +3,22 @@
 #include <lualib.h>
 #include <stdio.h>
 
+int multiplication(lua_State *L) {
+  // check first argument to be an integer and return the value
+  int a = luaL_checkinteger(L, 1);
+
+  // check second argument to be an integer and return the value
+  int b = luaL_checkinteger(L, 2);
+
+  lua_Integer c = a * b;
+
+  // to return a value first we must push the value onto the stack
+  lua_pushinteger(L, c);
+
+  // then we return the number of values we returned
+  return 1;
+}
+
 int main() {
   // create the state, virtual machine, registery table
   lua_State *L = luaL_newstate();
@@ -21,6 +37,39 @@ int main() {
       lua_pop(L, lua_gettop(L));
     }
   }
+
+  // add varialbe to lua land
+  lua_pushinteger(L, 42);
+  lua_setglobal(L, "answer");
+
+  code = "print(answer)";
+
+  if (luaL_dostring(L, code) == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
+
+  // add a function to lua
+  // push the pointer to the function to lua
+  /* lua_pushcfunction(L, multipleication); */
+
+  // get the value on top of the stack(the function pointer)
+  // and set it to "mul"
+  /* lua_setglobal(L, "mul"); */
+
+  // to simplifiy this furthur the "lua_register" macro can be sued
+  lua_register(L, "mul", multiplication);
+
+  // use the function in lua
+  code = "print(mul(8, 8))";
+
+  int ret_status = luaL_dostring(L, code);
+  printf("status: %d", ret_status);
+
+  if (ret_status == LUA_OK) {
+    lua_pop(L, lua_gettop(L));
+  }
+
+  // functions with namespaces
 
   lua_close(L);
   return 0;
