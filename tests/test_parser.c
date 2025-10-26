@@ -14,12 +14,21 @@ START_TEST(test_match_literal) {
   luaL_requiref(L, "parser", luaopen_parser, 1);
   lua_pop(L, 1);
 
+  // test happy path
   const char *lua_code = "local P = require('parser')\n"
                          "local p = P.literal('abc')\n"
                          "local out, rest = p:parse('abcdef')\n"
-                         "print('rest', rest)\n"
-                         "print('out',  out)\n"
                          "return rest == 'def' and out == 'abc'";
+
+  if (luaL_dostring(L, lua_code) != LUA_OK) {
+    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
+  }
+
+  // test error path
+  lua_code = "local P = require('parser')\n"
+             "local p = P.literal('abd')\n"
+             "local out, rest = p:parse('defabc')\n"
+             "return out == nil and rest == 'defabc'\n";
 
   if (luaL_dostring(L, lua_code) != LUA_OK) {
     ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
