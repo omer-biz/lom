@@ -3,21 +3,7 @@
 #include <lualib.h>
 #include <stdio.h>
 
-int multiplication(lua_State *L) {
-  // check first argument to be an integer and return the value
-  int a = luaL_checkinteger(L, 1);
-
-  // check second argument to be an integer and return the value
-  int b = luaL_checkinteger(L, 2);
-
-  lua_Integer c = a * b;
-
-  // to return a value first we must push the value onto the stack
-  lua_pushinteger(L, c);
-
-  // then we return the number of values we returned
-  return 1;
-}
+#include "parser.h"
 
 int main() {
   // create the state, virtual machine, registery table
@@ -26,122 +12,74 @@ int main() {
   // make the standard liberary available to lua
   luaL_openlibs(L);
 
-  // example running lua code
-  char *code = "print('Hello, Cruel World')";
+  // parser
+  luaL_requiref(L, "parser", luaopen_parser, 1);
+  lua_pop(L, 1);
+  // Lua test script
+  const char *script =
+      "print('--- Lua parser combinators test ---')\n"
+      "local parser = require('parser')\n"
+      "\n"
+      "-- literal parser\n"
+      "local lit = parser.literal('foo')\n"
+      "\n"
+      "-- map example: uppercase the result\n"
+      "local upper = lit:map(function(s) return string.upper(s) end)\n"
+      "\n"
+      "-- identifier parser\n"
+      "local ident = parser.identifier()\n"
+      "\n"
+      "-- zero_or_more example\n"
+      "local many_idents = ident:zero_or_more()\n"
+      "\n"
+      "-- and_then example: after matching 'foo', match 'bar'\n"
+      "local combined = lit:and_then(function(_) return parser.literal('bar') "
+      "end)\n"
+      "\n"
+      "-- one_or_more example\n"
+      "local repeated = parser.literal('a'):one_or_more()\n"
+      "\n"
+      "-- or_else example\n"
+      "local choice = parser.literal('x'):or_else(parser.literal('y'))\n"
+      "\n"
+      "-- pred example: only keep 'foo' if length is 3\n"
+      "local pred_test = lit:pred(function(s) return #s == 3 end)\n"
+      "\n"
+      "-- test inputs\n"
+      "local function run(p, input)\n"
+      "  local out, rest = p:parse(input)\n"
+      "  if out then\n"
+      "    print('Parse succeeded! Output:', out, 'Remaining:', rest)\n"
+      "  else\n"
+      "    print('Parse failed. Remaining input:', rest)\n"
+      "  end\n"
+      "end\n"
+      "\n"
+      "print('--- map test ---')\n"
+      "run(upper, 'foo baz')\n"
+      "\n"
+      "print('--- zero_or_more test ---')\n"
+      "run(many_idents, 'abc123 xyz')\n"
+      "\n"
+      "print('--- and_then test ---')\n"
+      "run(combined, 'foobar')\n"
+      "\n"
+      "print('--- one_or_more test ---')\n"
+      "run(repeated, 'aaaaab')\n"
+      "\n"
+      "print('--- or_else test ---')\n"
+      "run(choice, 'yabc')\n"
+      "\n"
+      "print('--- pred test ---')\n"
+      "run(pred_test, 'foo bar')\n"
+      "\n"
+      "collectgarbage()\n"
+      "print('--- done ---')\n";
 
-  // load the string
-  if (luaL_loadstring(L, code) == LUA_OK) {
-    // use lua_pcall to execute the string
-    if (lua_pcall(L, 0, 0, 0) == LUA_OK) {
-      // if successful remove the code from the stack
-      lua_pop(L, lua_gettop(L));
-    }
-  }
-
-  // add varialbe to lua land
-  lua_pushinteger(L, 42);
-  lua_setglobal(L, "answer");
-
-  code = "print(answer)";
-
-  if (luaL_dostring(L, code) == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  // add a function to lua
-  // push the pointer to the function to lua
-  /* lua_pushcfunction(L, multipleication); */
-
-  // get the value on top of the stack(the function pointer)
-  // and set it to "mul"
-  /* lua_setglobal(L, "mul"); */
-
-  // to simplifiy this furthur the "lua_register" macro can be sued
-  lua_register(L, "mul", multiplication);
-
-  // use the function in lua
-  code = "print(mul(8, 8))";
-
-  int ret_status = luaL_dostring(L, code);
-  printf("status: %d\n", ret_status);
-
-  if (ret_status == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  // functions with namespaces
-  // namespaces are tables in lua
-  const struct luaL_Reg MyMathLib[] = {{"mul", multiplication}, {NULL, NULL}};
-
-  // crate a table on top of the stack
-  lua_newtable(L);
-
-  // set the 'MyMathLib' to the table on top of the stack
-  luaL_setfuncs(L, MyMathLib, 0);
-
-  // set the table on top to the global variable "MyMath"
-  lua_setglobal(L, "MyMath");
-
-  code = "print(MyMath.mul(7, 8))";
-
-  ret_status = luaL_dostring(L, code);
-  printf("status: %d\n", ret_status);
-
-  if (ret_status == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  // running lua scripts
-  if (luaL_dofile(L, "script.lua") == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  // getting variables from lua
-  if (luaL_dofile(L, "script2.lua") == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  lua_getglobal(L, "message");
-
-  if (lua_isstring(L, -1)) {
-    const char *message = lua_tostring(L, -1);
+  // run the script
+  if (luaL_dostring(L, script) != LUA_OK) {
+    fprintf(stderr, "Lua error: %s\n", lua_tostring(L, -1));
     lua_pop(L, 1);
-
-    printf("Message from lua: %s\n", message);
-  }
-
-  // calling lua function
-  if (luaL_dofile(L, "script3.lua") == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  lua_getglobal(L, "my_function");
-  if (lua_isfunction(L, -1)) {
-    if (lua_pcall(L, 0, 1, 0) == LUA_OK) {
-      lua_pop(L, lua_gettop(L));
-    }
-  }
-
-  // calling a lua function with c arguments
-  if (luaL_dofile(L, "script4.lua") == LUA_OK) {
-    lua_pop(L, lua_gettop(L));
-  }
-
-  // push the function to be called on to the stack
-  lua_getglobal(L, "my_function");
-  if (lua_isfunction(L, -1)) {
-    lua_pushinteger(L, 3);
-    lua_pushinteger(L, 4);
-
-    if (lua_pcall(L, 2, 1, 0) == LUA_OK) {
-      if (lua_isinteger(L, -1)) {
-        int result = lua_tointeger(L, -1);
-
-        lua_pop(L, -1);
-        printf("Result from calling lua function: %d\n", result);
-      }
-      lua_pop(L, lua_gettop(L));
-    }
   }
 
   lua_close(L);
