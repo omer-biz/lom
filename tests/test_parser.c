@@ -44,6 +44,30 @@ START_TEST(test_match_literal) {
 }
 END_TEST
 
+START_TEST(test_identifier) {
+  const char *lua_code = "local P = require('parser')\n"
+                         "local p = P.identifier('my_num')\n"
+                         "local out, rest = p:parse('my_num = 10')\n"
+                         "return out == 'my_num' and rest == ' = 10'";
+
+  if (luaL_dostring(L, lua_code) != LUA_OK) {
+    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
+  }
+
+  ck_assert(lua_toboolean(L, -1));
+
+  lua_code = "local P = require('parser')\n"
+             "local p = P.identifier('-my_num')\n"
+             "local out, rest = p:parse('-my_num = 10')\n"
+             "return out == nil and rest == '-my_num = 10'";
+
+  if (luaL_dostring(L, lua_code) != LUA_OK) {
+    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
+  }
+
+  ck_assert(lua_toboolean(L, -1));
+}
+END_TEST
 
 Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
@@ -52,6 +76,7 @@ Suite *parser_suite(void) {
   tcase_add_checked_fixture(tc, test_setup, test_teardown);
 
   tcase_add_test(tc, test_match_literal);
+  tcase_add_test(tc, test_identifier);
 
   suite_add_tcase(s, tc);
   return s;

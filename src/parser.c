@@ -119,7 +119,7 @@ static ParseResult identifier_parse(Parser *p, const char *input) {
   i++;
   while (i < len) {
     unsigned char c = (unsigned char)input[i];
-    if (isalnum(c) || c == '-')
+    if (isalnum(c) || c == '-' || c == '_')
       i++;
     else
       break;
