@@ -5,15 +5,21 @@
 
 #include "../src/parser.h"
 
-START_TEST(test_match_literal) {
-  lua_State *L = luaL_newstate();
+static lua_State *L;
+
+void test_setup(void) {
+  L = luaL_newstate();
 
   luaL_openlibs(L);
   luaopen_parser(L);
 
   luaL_requiref(L, "parser", luaopen_parser, 1);
   lua_pop(L, 1);
+}
 
+void test_teardown(void) { lua_close(L); }
+
+START_TEST(test_match_literal) {
   // test happy path
   const char *lua_code = "local P = require('parser')\n"
                          "local p = P.literal('abc')\n"
@@ -35,14 +41,18 @@ START_TEST(test_match_literal) {
   }
 
   ck_assert(lua_toboolean(L, -1));
-  lua_close(L);
 }
 END_TEST
+
 
 Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
+
+  tcase_add_checked_fixture(tc, test_setup, test_teardown);
+
   tcase_add_test(tc, test_match_literal);
+
   suite_add_tcase(s, tc);
   return s;
 }
