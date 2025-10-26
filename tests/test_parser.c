@@ -2,6 +2,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
+#include <stdio.h>
 
 #include "../src/parser.h"
 
@@ -22,22 +23,22 @@ void test_setup(void) {
 
 void test_teardown(void) { lua_close(L); }
 
-START_TEST(test_literal) {
+static void run_lua_test(const char *filename) {
+  char fullpath[256];
+  snprintf(fullpath, sizeof(fullpath), "./lua_scripts/%s", filename);
 
-  if (luaL_dofile(L, "./lua_scripts/test_literal.lua") != LUA_OK) {
+  if (luaL_dofile(L, fullpath) != LUA_OK) {
     ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
   }
 
   ck_assert(lua_toboolean(L, -1));
 }
+
+START_TEST(test_literal) { run_lua_test("test_literal.lua"); }
 END_TEST
 
 START_TEST(test_identifier) {
-  if (luaL_dofile(L, "./lua_scripts/test_identifier.lua") != LUA_OK) {
-    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
-  }
-
-  ck_assert(lua_toboolean(L, -1));
+  run_lua_test("test_identifier.lua");
 }
 END_TEST
 
