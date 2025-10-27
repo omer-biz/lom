@@ -37,9 +37,10 @@ static void run_lua_test(const char *filename) {
 START_TEST(test_literal) { run_lua_test("test_literal.lua"); }
 END_TEST
 
-START_TEST(test_identifier) {
-  run_lua_test("test_identifier.lua");
-}
+START_TEST(test_identifier) { run_lua_test("test_identifier.lua"); }
+END_TEST
+
+START_TEST(test_left) { run_lua_test("./test_left.lua"); }
 END_TEST
 
 Suite *parser_suite(void) {
@@ -50,6 +51,7 @@ Suite *parser_suite(void) {
 
   tcase_add_test(tc, test_literal);
   tcase_add_test(tc, test_identifier);
+  tcase_add_test(tc, test_left);
 
   suite_add_tcase(s, tc);
   return s;
