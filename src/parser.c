@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <lua.h>
 
 /* ---------------------------
    ParseResult
@@ -515,6 +516,70 @@ static Parser *make_zero_or_more(lua_State *L, Parser *inner) {
   return parser_new(P_ZERO_OR_MORE, zero_or_more_parse, rep_destroy, d, L);
 }
 
+static ParseResult pair_parse(Parser *p, const char *input) {
+  PairData *d = (PairData *)p->data;
+  lua_State *L = p->L;
+
+  ParseResult r_left = d->left->parse(d->left, input);
+  if (!r_left.ok) {
+    return r_left;
+  }
+
+  ParseResult r_right = d->right->parse(d->right, r_left.rest);
+
+  if (!r_right.ok) {
+    if (r_left.lua_ref != LUA_NOREF) {
+      luaL_unref(L, LUA_REGISTRYINDEX, r_left.lua_ref);
+    }
+
+    return r_right;
+  }
+
+  lua_newtable(L);
+
+  if (r_left.lua_ref != LUA_NOREF) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, r_left.lua_ref);
+    luaL_unref(L, LUA_REGISTRYINDEX, r_left.lua_ref);
+  } else {
+    lua_pushnil(L);
+  }
+  lua_rawseti(L, -2, 1); // left is first element
+
+  if (r_right.lua_ref != LUA_NOREF) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, r_right.lua_ref);
+    luaL_unref(L, LUA_REGISTRYINDEX, r_right.lua_ref);
+  } else {
+    lua_pushnil(L);
+  }
+  lua_rawseti(L, -2, 2); // right is first element
+
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  return parse_ok(r_right.rest, ref);
+}
+
+static void pair_destroy(Parser *p) {
+  PairData *d = (PairData *)p->data;
+  if (d) {
+    if (d->left)
+      parser_unref(d->left);
+    if (d->right)
+      parser_unref(d->right);
+    free(d);
+  }
+}
+
+static Parser *make_pair(lua_State *L, Parser *left, Parser *right) {
+  PairData *d = (PairData *)malloc(sizeof(PairData));
+
+  d->left = left;
+  parser_ref(left);
+
+  d->right = right;
+  parser_ref(right);
+
+  return parser_new(P_PAIR, pair_parse, pair_destroy, d, L);
+}
+
 /* ---------------------------
    Lua userdata helpers
    --------------------------- */
@@ -672,6 +737,17 @@ static int l_parser_right(lua_State *L) {
   return 1;
 }
 
+static int l_parser_pair(lua_State *L) {
+  Parser *left = check_parser_ud(L, 1);
+  Parser *right = check_parser_ud(L, 2);
+
+  Parser *p = make_pair(L, left, right);
+  push_parser_ud(L, p);
+  parser_unref(p);
+
+  return 1;
+}
+
 /* __gc metamethod: free the userdata-owned reference */
 static int l_parser_gc(lua_State *L) {
   Parser **ud = (Parser **)luaL_checkudata(L, 1, "Parser");
@@ -720,6 +796,9 @@ static int l_parser_tostring(lua_State *L) {
   case P_RIGHT:
     kind = "right";
     break;
+  case P_PAIR:
+    kind = "pair";
+    break;
 
   default:
     kind = "parser";
@@ -741,6 +820,7 @@ static const luaL_Reg parser_methods[] = {
     {"zero_or_more", l_parser_zero_or_more},
     {"left", l_parser_left},
     {"right", l_parser_right},
+    {"pair", l_parser_pair},
     {"parse", l_parser_parse},
     {NULL, NULL}};
 

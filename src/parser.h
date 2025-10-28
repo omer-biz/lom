@@ -40,6 +40,7 @@ typedef enum {
   P_ZERO_OR_MORE,
   P_LEFT,
   P_RIGHT,
+  P_PAIR,
 } ParserKind;
 
 struct Parser {
@@ -193,6 +194,20 @@ static ParseResult zero_or_more_parse(Parser *p, const char *input);
 static void rep_destroy(Parser *p);
 static Parser *make_one_or_more(lua_State *L, Parser *inner);
 static Parser *make_zero_or_more(lua_State *L, Parser *inner);
+
+/* ---------------------------
+   pair combinator
+   returns a table contating the result from both parsers
+   ---------------------------  */
+
+typedef struct {
+  Parser *left;
+  Parser *right;
+} PairData;
+
+static ParseResult pair_parse(Parser *p, const char *input);
+static void pair_destroy(Parser *p);
+static Parser *make_pair(lua_State *L, Parser *left, Parser *right);
 
 /* ---------------------------
    Lua userdata helpers
