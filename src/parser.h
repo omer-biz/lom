@@ -14,10 +14,10 @@
 typedef struct {
   int ok;           // 1 success, 0 failure
   const char *rest; // pointer into original input (not owned)
-  char *output;     // malloc'd owned string on success, NULL otherwise
+  int lua_ref;      // store the result in the register
 } ParseResult;
 
-static ParseResult parse_ok(const char *rest, char *output);
+static ParseResult parse_ok(const char *rest, int lua_ref);
 static ParseResult parse_err(const char *input);
 
 /* ---------------------------

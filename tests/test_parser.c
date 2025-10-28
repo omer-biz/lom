@@ -43,6 +43,9 @@ END_TEST
 START_TEST(test_left) { run_lua_test("./test_left.lua"); }
 END_TEST
 
+/* START_TEST(test_pair) { run_lua_test("./test_pair.lua"); } */
+/* END_TEST */
+
 Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
@@ -52,6 +55,7 @@ Suite *parser_suite(void) {
   tcase_add_test(tc, test_literal);
   tcase_add_test(tc, test_identifier);
   tcase_add_test(tc, test_left);
+  /* tcase_add_test(tc, test_pair); */
 
   suite_add_tcase(s, tc);
   return s;

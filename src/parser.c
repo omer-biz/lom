@@ -4,13 +4,13 @@
    ParseResult
    --------------------------- */
 
-static ParseResult parse_ok(const char *rest, char *output) {
-  ParseResult r = {1, rest, output};
+static ParseResult parse_ok(const char *rest, int lua_ref) {
+  ParseResult r = {1, rest, lua_ref};
   return r;
 }
 
 static ParseResult parse_err(const char *input) {
-  ParseResult r = {0, input, NULL};
+  ParseResult r = {0, input, LUA_NOREF};
   return r;
 }
 
@@ -53,8 +53,11 @@ static ParseResult literal_parse(Parser *p, const char *input) {
   LiteralData *d = (LiteralData *)p->data;
   size_t n = strlen(d->lit);
   if (strncmp(input, d->lit, n) == 0) {
-    char *out = strdup(d->lit);
-    return parse_ok(input + n, out);
+
+    lua_pushlstring(p->L, d->lit, n);
+    int ref = luaL_ref(p->L, LUA_REGISTRYINDEX);
+
+    return parse_ok(input + n, ref);
   }
 
   return parse_err(input);
@@ -91,9 +94,11 @@ static ParseResult any_char_parse(Parser *p, const char *input) {
     len = 4;
 
   char *out = (char *)malloc(len + 1);
-  memcpy(out, input, len);
-  out[len] = '\0';
-  return parse_ok(input + len, out);
+
+  lua_pushlstring(p->L, input, len);
+  int ref = luaL_ref(p->L, LUA_REGISTRYINDEX);
+
+  return parse_ok(input + len, ref);
 }
 
 static void any_char_destroy(Parser *p) { free(p->data); }
@@ -125,11 +130,10 @@ static ParseResult identifier_parse(Parser *p, const char *input) {
       break;
   }
 
-  size_t matched = i;
-  char *out = (char *)malloc(matched + 1);
-  memcpy(out, input, matched);
-  out[matched] = '\0';
-  return parse_ok(input + matched, out);
+  lua_pushlstring(p->L, input, i);
+  int ref = luaL_ref(p->L, LUA_REGISTRYINDEX);
+
+  return parse_ok(input + i, ref);
 }
 
 static void identifier_destroy(Parser *p) { free(p->data); }
@@ -148,21 +152,28 @@ static ParseResult map_parse(Parser *p, const char *input) {
   // get function from registry and call with r.output
   lua_State *L = p->L;
   lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref); // push function
-  lua_pushstring(L, r.output);
+
+  if (r.lua_ref != LUA_NOREF)
+    lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+  else
+    lua_pushnil(L);
+
   if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
     // error calling lua function - return parse error
     const char *err = lua_tostring(L, -1);
     fprintf(stderr, "map callback error: %s\n", err ? err : "(unknown)");
     lua_pop(L, 1);
-    free(r.output);
     return parse_err(input);
   }
-  // expect a string result
-  const char *res = lua_tostring(L, -1);
-  char *mapped = res ? strdup(res) : strdup("");
-  lua_pop(L, 1);
-  free(r.output);
-  return parse_ok(r.rest, mapped);
+
+  if (r.lua_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, r.lua_ref);
+  }
+
+  // push the result to the registery
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  return parse_ok(r.rest, ref);
 }
 
 static void map_destroy(Parser *p) {
@@ -193,14 +204,17 @@ static ParseResult and_then_parse(Parser *p, const char *input) {
     return r;
 
   lua_State *L = p->L;
-  // call lua function with r.output, expect it to return a Parser userdata
   lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
-  lua_pushstring(L, r.output);
+
+  if (r.lua_ref != LUA_NOREF)
+    lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+  else
+    lua_pushnil(L);
+
   if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
     const char *err = lua_tostring(L, -1);
     fprintf(stderr, "and_then callback error: %s\n", err ? err : "(unknown)");
     lua_pop(L, 1);
-    free(r.output);
     return parse_err(input);
   }
 
@@ -209,19 +223,22 @@ static ParseResult and_then_parse(Parser *p, const char *input) {
   if (!retp) {
     // not a parser
     lua_pop(L, 1);
-    free(r.output);
     return parse_err(input);
   }
+
   Parser *next = *retp;
   // we must ensure ownership: parser returned by Lua userdata is still owned by
   // that userdata but we can call parse on it; it must be valid while Lua holds
   // it. For safety, increment ref so we can use it and unref after:
   parser_ref(next);
-  lua_pop(L, 1); // pop return value
+  lua_pop(L, 1); // pop return value, remove userdata pointer from the stack
 
   ParseResult r2 = next->parse(next, r.rest);
   parser_unref(next);
-  free(r.output);
+
+  if (r.lua_ref != LUA_NOREF)
+    luaL_unref(L, LUA_REGISTRYINDEX, r.lua_ref);
+
   return r2;
 }
 
@@ -280,19 +297,22 @@ static ParseResult pred_parse(Parser *p, const char *input) {
     return r;
   lua_State *L = p->L;
   lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
-  lua_pushstring(L, r.output);
+  if (r.lua_ref != LUA_NOREF) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+  } else {
+    lua_pushnil(L);
+  }
+
   if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
     const char *err = lua_tostring(L, -1);
     fprintf(stderr, "pred callback error: %s\n", err ? err : "(unknown)");
     lua_pop(L, 1);
-    free(r.output);
     return parse_err(input);
   }
   int truthy = lua_toboolean(L, -1);
   lua_pop(L, 1);
   if (truthy)
     return r;
-  free(r.output);
   return parse_err(input);
 }
 
@@ -317,6 +337,7 @@ static Parser *make_pred(lua_State *L, Parser *inner, int func_ref) {
 
 static ParseResult left_parse(Parser *p, const char *input) {
   LeftData *d = (LeftData *)p->data;
+  lua_State *L = p->L;
 
   ParseResult r1 = d->left->parse(d->left, input);
   if (!r1.ok)
@@ -326,14 +347,17 @@ static ParseResult left_parse(Parser *p, const char *input) {
   if (!r2.ok) {
     // if we are here, that means r1 has succeeded which means it allocated a
     // memory for it's result which have to free if r2 fails.
-    free(r1.output);
+    if (r1.lua_ref != LUA_NOREF)
+      luaL_unref(L, LUA_REGISTRYINDEX, r1.lua_ref);
+
     return r2;
   }
 
-  char *left_out = r1.output;
-  const char *rest = r2.rest;
-  free(r2.output); // r2 is right;
-  return parse_ok(rest, left_out);
+  if (r2.lua_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, r2.lua_ref);
+  }
+
+  return parse_ok(r2.rest, r1.lua_ref);
 }
 
 static void left_destroy(Parser *p) {
@@ -363,6 +387,7 @@ static Parser *make_left(lua_State *L, Parser *left, Parser *right) {
 
 static ParseResult right_parse(Parser *p, const char *input) {
   RightData *d = (RightData *)p->data;
+  lua_State *L = p->L;
 
   ParseResult r1 = d->left->parse(d->left, input);
   if (!r1.ok)
@@ -370,15 +395,16 @@ static ParseResult right_parse(Parser *p, const char *input) {
 
   ParseResult r2 = d->right->parse(d->right, r1.rest);
   if (!r2.ok) {
-    free(r1.output);
+    if (r1.lua_ref != LUA_NOREF)
+      luaL_unref(L, LUA_REGISTRYINDEX, r1.lua_ref);
+
     return r2;
   }
 
-  char *right_out = r2.output;
-  const char *rest = r2.rest;
+  if (r1.lua_ref != LUA_NOREF)
+    luaL_unref(L, LUA_REGISTRYINDEX, r1.lua_ref);
 
-  free(r1.output);
-  return parse_ok(rest, right_out);
+  return parse_ok(r2.rest, r2.lua_ref);
 }
 
 static void right_destroy(Parser *p) {
@@ -408,79 +434,62 @@ static Parser *make_right(lua_State *L, Parser *left, Parser *right) {
 
 static ParseResult one_or_more_parse(Parser *p, const char *input) {
   RepData *d = (RepData *)p->data;
+  lua_State *L = p->L;
   const char *cur = input;
+
+  // First parse (must succeed)
   ParseResult r = d->inner->parse(d->inner, cur);
   if (!r.ok)
     return r;
-  // dynamic buffer
-  size_t cap = 64;
-  size_t len = 0;
-  char *buf = (char *)malloc(cap);
-  // append first
-  size_t add = strlen(r.output);
-  while (len + add + 1 > cap) {
-    cap *= 2;
-    buf = (char *)realloc(buf, cap);
-    if (!buf) {
-      perror("realloc");
-      exit(1);
-    }
-  }
-  memcpy(buf + len, r.output, add);
-  len += add;
-  buf[len] = '\0';
-  cur = r.rest;
-  free(r.output);
 
-  while (1) {
-    ParseResult r2 = d->inner->parse(d->inner, cur);
-    if (!r2.ok)
-      break;
-    add = strlen(r2.output);
-    while (len + add + 1 > cap) {
-      cap *= 2;
-      buf = (char *)realloc(buf, cap);
-      if (!buf) {
-        perror("realloc");
-        exit(1);
-      }
+  lua_newtable(L);
+  int count = 0;
+
+  do {
+    count++;
+    if (r.lua_ref != LUA_NOREF) {
+      lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+      luaL_unref(L, LUA_REGISTRYINDEX, r.lua_ref);
+    } else {
+      lua_pushnil(L);
     }
-    memcpy(buf + len, r2.output, add);
-    len += add;
-    buf[len] = '\0';
-    cur = r2.rest;
-    free(r2.output);
-  }
-  return parse_ok(cur, buf);
+    lua_rawseti(L, -2, count);
+    cur = r.rest;
+
+    r = d->inner->parse(d->inner, cur); // RE-PARSE HERE
+  } while (r.ok);
+
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  return parse_ok(cur, ref);
 }
 
 static ParseResult zero_or_more_parse(Parser *p, const char *input) {
   RepData *d = (RepData *)p->data;
+  lua_State *L = p->L;
   const char *cur = input;
-  size_t cap = 64;
-  size_t len = 0;
-  char *buf = (char *)malloc(cap);
-  buf[0] = '\0';
+
+  lua_newtable(L);
+  int count = 0;
+
   while (1) {
     ParseResult r = d->inner->parse(d->inner, cur);
     if (!r.ok)
       break;
-    size_t add = strlen(r.output);
-    while (len + add + 1 > cap) {
-      cap *= 2;
-      buf = (char *)realloc(buf, cap);
-      if (!buf) {
-        perror("realloc");
-        exit(1);
-      }
+
+    count++;
+    if (r.lua_ref != LUA_NOREF) {
+      lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+      luaL_unref(L, LUA_REGISTRYINDEX, r.lua_ref);
+    } else {
+      lua_pushnil(L);
     }
-    memcpy(buf + len, r.output, add);
-    len += add;
-    buf[len] = '\0';
+    lua_rawseti(L, -2, count);
+
     cur = r.rest;
-    free(r.output);
   }
-  return parse_ok(cur, buf);
+
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  return parse_ok(cur, ref);
 }
 
 static void rep_destroy(Parser *p) {
@@ -620,15 +629,19 @@ static int l_parser_zero_or_more(lua_State *L) {
   return 1;
 }
 
-/* p:parse(input) -> returns output (string or nil) , rest (string) */
+/* p:parse(input) -> returns output (string or table or nil) , rest (string) */
 static int l_parser_parse(lua_State *L) {
   Parser *p = check_parser_ud(L, 1);
   const char *input = luaL_checkstring(L, 2);
   ParseResult r = p->parse(p, input);
   if (r.ok) {
-    lua_pushstring(L, r.output ? r.output : "");
+
+    if (r.lua_ref != LUA_NOREF)
+      lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+    else
+      lua_pushnil(L);
+
     lua_pushstring(L, r.rest ? r.rest : "");
-    free(r.output);
     return 2;
   } else {
     lua_pushnil(L);
@@ -649,14 +662,14 @@ static int l_parser_left(lua_State *L) {
 }
 
 static int l_parser_right(lua_State *L) {
-    Parser *left = check_parser_ud(L, 1);
-    Parser *right = check_parser_ud(L, 2);
+  Parser *left = check_parser_ud(L, 1);
+  Parser *right = check_parser_ud(L, 2);
 
-    Parser *p = make_right(L, left, right);
-    push_parser_ud(L, p);
-    parser_unref(p);
+  Parser *p = make_right(L, left, right);
+  push_parser_ud(L, p);
+  parser_unref(p);
 
-    return 1;
+  return 1;
 }
 
 /* __gc metamethod: free the userdata-owned reference */
