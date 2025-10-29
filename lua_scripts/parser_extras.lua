@@ -16,4 +16,15 @@ function M.space0()
   return M.whitespace_char():zero_or_more()
 end
 
+function M.quoted_string()
+  return M.space0()
+    :right(M.literal('"')
+      :right(
+        M.any_char()
+        :pred(function(char) return char ~= '"'
+        end):zero_or_more():left(M.literal('"'))
+      ):map(function(chars) return table.concat(chars, "") end)
+    )
+end
+
 return M
