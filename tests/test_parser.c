@@ -59,7 +59,7 @@ START_TEST(test_whitepace) { run_lua_test("./test_whitespace.lua"); }
 END_TEST
 
 START_TEST(test_simple_xml) {
-  L = luaL_newstate();
+  lua_State *L = luaL_newstate();
 
   luaL_openlibs(L);
   luaopen_parser(L);

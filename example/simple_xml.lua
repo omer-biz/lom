@@ -112,5 +112,4 @@ local xml_ast = {
     },
 }
 
-
-return P.utils.tables_equal(xml_ast, out) and rest == "hello"
+return P.utils.tables_equal(xml_ast, out) and rest == "hello\n"
