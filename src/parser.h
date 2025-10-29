@@ -255,5 +255,9 @@ static int l_parser_parse(lua_State *L);
 
 int luaopen_parser(lua_State *L);
 
+#ifndef PARSER_EXTRAS_LUA
+#define PARSER_EXTRAS_LUA ""
+#endif
+
 #define __PARSER_LUA
 #endif
