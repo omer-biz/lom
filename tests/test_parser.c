@@ -58,6 +58,28 @@ END_TEST
 START_TEST(test_whitepace) { run_lua_test("./test_whitespace.lua"); }
 END_TEST
 
+START_TEST(test_simple_xml) {
+  L = luaL_newstate();
+
+  luaL_openlibs(L);
+  luaopen_parser(L);
+
+  lua_getglobal(L, "package");
+  lua_getfield(L, -1, "path");
+
+  luaL_requiref(L, "parser", luaopen_parser, 1);
+  lua_pop(L, 1);
+
+  if (luaL_dofile(L, "./example/simple_xml.lua") != LUA_OK) {
+    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
+  }
+
+  ck_assert(lua_toboolean(L, -1));
+
+  lua_close(L);
+}
+END_TEST
+
 Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
@@ -72,6 +94,7 @@ Suite *parser_suite(void) {
   tcase_add_test(tc, test_zero_or_more);
   tcase_add_test(tc, test_pred);
   tcase_add_test(tc, test_whitepace);
+  tcase_add_test(tc, test_simple_xml);
 
   suite_add_tcase(s, tc);
   return s;

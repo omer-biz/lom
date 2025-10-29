@@ -336,6 +336,10 @@ static Parser *make_pred(lua_State *L, Parser *inner, int func_ref) {
   return parser_new(P_PRED, pred_parse, pred_destroy, d, L);
 }
 
+// TODO: rename to take_after
+// since we are using it as a method lit1:left(lit2) doesn't make sense
+// instead: lit1:take_after(lit2) makes it clear, we are taking lit1 after
+// parsing lit2
 static ParseResult left_parse(Parser *p, const char *input) {
   LeftData *d = (LeftData *)p->data;
   lua_State *L = p->L;
@@ -386,6 +390,10 @@ static Parser *make_left(lua_State *L, Parser *left, Parser *right) {
   return parser_new(P_LEFT, left_parse, left_destroy, d, L);
 }
 
+// TODO: rename to drop_for
+// since we are using it as a method lit1:right(lit2) doesn't make sense
+// instead: lit1:drop_for(lit2) makes it clear, we are droping lit1 for lit2 after
+// parsing lit1
 static ParseResult right_parse(Parser *p, const char *input) {
   RightData *d = (RightData *)p->data;
   lua_State *L = p->L;
