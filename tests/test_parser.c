@@ -48,7 +48,11 @@ END_TEST
 
 START_TEST(test_one_or_more) { run_lua_test("./test_one_or_more.lua"); }
 END_TEST
+
 START_TEST(test_zero_or_more) { run_lua_test("./test_zero_or_more.lua"); }
+END_TEST
+
+START_TEST(test_pred) { run_lua_test("./test_pred.lua"); }
 END_TEST
 
 Suite *parser_suite(void) {
@@ -63,6 +67,7 @@ Suite *parser_suite(void) {
   tcase_add_test(tc, test_pair);
   tcase_add_test(tc, test_one_or_more);
   tcase_add_test(tc, test_zero_or_more);
+  tcase_add_test(tc, test_pred);
 
   suite_add_tcase(s, tc);
   return s;
