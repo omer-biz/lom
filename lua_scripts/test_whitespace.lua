@@ -7,8 +7,7 @@ local result1 = #out == 4 and rest == "123"
 print("res1", result1)
 
 -- since we have a whitespace parser now we can do
-local quoted_string = P.whitespace_char()
-  :zero_or_more()
+local quoted_string = P.space0()
   :right(P.literal('"')
   :right(
     P.any_char()
