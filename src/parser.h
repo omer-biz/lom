@@ -41,6 +41,7 @@ typedef enum {
   P_LEFT,
   P_RIGHT,
   P_PAIR,
+  P_LAZY,
 } ParserKind;
 
 struct Parser {
@@ -208,6 +209,14 @@ typedef struct {
 static ParseResult pair_parse(Parser *p, const char *input);
 static void pair_destroy(Parser *p);
 static Parser *make_pair(lua_State *L, Parser *left, Parser *right);
+
+typedef struct {
+  int func_ref;
+} LazyData;
+
+static ParseResult lazy_parse(Parser *p, const char *input);
+static void lazy_destroy(Parser *p);
+static Parser *make_lazy(lua_State *L, int func_ref);
 
 /* ---------------------------
    Lua userdata helpers

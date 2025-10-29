@@ -580,6 +580,57 @@ static Parser *make_pair(lua_State *L, Parser *left, Parser *right) {
   return parser_new(P_PAIR, pair_parse, pair_destroy, d, L);
 }
 
+
+static ParseResult lazy_parse(Parser *p, const char *input) {
+  LazyData *d = (LazyData *) p->data;
+  lua_State *L = p->L;
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
+
+  if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
+    const char *err = lua_tostring(L, -1);
+    fprintf(stderr, "lazy parser thunk error: %s\n", err ? err : "(unknown)");
+    lua_pop(L, 1);
+
+    return parse_err(input);
+  }
+
+  Parser **pp = (Parser **) luaL_testudata(L, -1, "Parser");
+
+  if (!pp) {
+    lua_pop(L, 1);
+    return parse_err(input);
+  }
+
+  Parser *inner = *pp;
+  parser_ref(inner);
+
+  lua_pop(L, 1);
+
+  ParseResult r = inner->parse(inner, input);
+
+  parser_unref(inner);
+  return r;
+}
+
+static void lazy_destroy(Parser *p) {
+  LazyData *d = (LazyData *) p->data;
+  if (d) {
+    if (d->func_ref != LUA_NOREF) {
+      luaL_unref(p->L, LUA_REGISTRYINDEX, d->func_ref);
+    }
+    free(d);
+  }
+}
+
+static Parser *make_lazy(lua_State *L, int func_ref) {
+  LazyData *d = (LazyData *) malloc(sizeof(LazyData));
+  d->func_ref = func_ref;
+
+
+  return parser_new(P_LAZY, lazy_parse, lazy_destroy, d, L);
+}
+
 /* ---------------------------
    Lua userdata helpers
    --------------------------- */
@@ -748,6 +799,19 @@ static int l_parser_pair(lua_State *L) {
   return 1;
 }
 
+static int l_parser_lazy(lua_State *L) {
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+
+  lua_pushvalue(L, 1);
+  int func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  Parser *p = make_lazy(L, func_ref);
+
+  push_parser_ud(L, p);
+
+  return 1;
+}
+
 /* __gc metamethod: free the userdata-owned reference */
 static int l_parser_gc(lua_State *L) {
   Parser **ud = (Parser **)luaL_checkudata(L, 1, "Parser");
@@ -798,6 +862,10 @@ static int l_parser_tostring(lua_State *L) {
     break;
   case P_PAIR:
     kind = "pair";
+    break;
+
+  case P_LAZY:
+    kind = "lazy";
     break;
 
   default:
@@ -851,6 +919,8 @@ int luaopen_parser(lua_State *L) {
   lua_setfield(L, -2, "any_char");
   lua_pushcfunction(L, l_parser_identifier);
   lua_setfield(L, -2, "identifier");
+  lua_pushcfunction(L, l_parser_lazy);
+  lua_setfield(L, -2, "lazy");
 
   size_t parser_extras_lua_len = strlen(PARSER_EXTRAS_LUA);
 
