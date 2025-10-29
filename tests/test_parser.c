@@ -55,6 +55,9 @@ END_TEST
 START_TEST(test_pred) { run_lua_test("./test_pred.lua"); }
 END_TEST
 
+START_TEST(test_whitepace) { run_lua_test("./test_whitespace.lua"); }
+END_TEST
+
 Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
@@ -68,6 +71,7 @@ Suite *parser_suite(void) {
   tcase_add_test(tc, test_one_or_more);
   tcase_add_test(tc, test_zero_or_more);
   tcase_add_test(tc, test_pred);
+  tcase_add_test(tc, test_whitepace);
 
   suite_add_tcase(s, tc);
   return s;
