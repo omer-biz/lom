@@ -48,8 +48,8 @@ int lom_run(const char *script) {
 }
 
 void lom_close(void) {
-    if (G_L) {
-        lua_close(G_L);
-        G_L = NULL;
-    }
+  if (G_L) {
+    lua_close(G_L);
+    G_L = NULL;
+  }
 }

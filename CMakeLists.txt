@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
+option(CMAKE_EXPORT_COMPILE_COMMANDS "Create compile_commands.json" ON)
+
 project(lom
   LANGUAGES C
 )
