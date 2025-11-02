@@ -394,8 +394,8 @@ static Parser *make_take_after(lua_State *L, Parser *left, Parser *right) {
 // since we are using it as a method lit1:right(lit2) doesn't make sense
 // instead: lit1:drop_for(lit2) makes it clear, we are droping lit1 for lit2
 // after parsing lit1
-static ParseResult right_parse(Parser *p, const char *input) {
-  RightData *d = (RightData *)p->data;
+static ParseResult drop_for_parse(Parser *p, const char *input) {
+  DropForData *d = (DropForData *)p->data;
   lua_State *L = p->L;
 
   ParseResult r1 = d->left->parse(d->left, input);
@@ -416,8 +416,8 @@ static ParseResult right_parse(Parser *p, const char *input) {
   return parse_ok(r2.rest, r2.lua_ref);
 }
 
-static void right_destroy(Parser *p) {
-  RightData *d = (RightData *)p->data;
+static void drop_for_destroy(Parser *p) {
+  DropForData *d = (DropForData *)p->data;
 
   if (d) {
     if (d->left)
@@ -429,8 +429,8 @@ static void right_destroy(Parser *p) {
   }
 }
 
-static Parser *make_right(lua_State *L, Parser *left, Parser *right) {
-  RightData *d = (RightData *)malloc(sizeof(RightData));
+static Parser *make_drop_for(lua_State *L, Parser *left, Parser *right) {
+  DropForData *d = (DropForData *)malloc(sizeof(DropForData));
 
   d->left = left;
   parser_ref(left);
@@ -438,7 +438,7 @@ static Parser *make_right(lua_State *L, Parser *left, Parser *right) {
   d->right = right;
   parser_ref(right);
 
-  return parser_new(P_RIGHT, right_parse, right_destroy, d, L);
+  return parser_new(P_DROP_FOR, drop_for_parse, drop_for_destroy, d, L);
 }
 
 static ParseResult one_or_more_parse(Parser *p, const char *input) {
@@ -783,11 +783,11 @@ static int l_parser_take_after(lua_State *L) {
   return 1;
 }
 
-static int l_parser_right(lua_State *L) {
+static int l_parser_drop_for(lua_State *L) {
   Parser *left = check_parser_ud(L, 1);
   Parser *right = check_parser_ud(L, 2);
 
-  Parser *p = make_right(L, left, right);
+  Parser *p = make_drop_for(L, left, right);
   push_parser_ud(L, p);
   parser_unref(p);
 
@@ -863,8 +863,8 @@ static int l_parser_tostring(lua_State *L) {
   case P_TAKE_AFTER:
     kind = "take_after";
     break;
-  case P_RIGHT:
-    kind = "right";
+  case P_DROP_FOR:
+    kind = "drop_for";
     break;
   case P_PAIR:
     kind = "pair";
@@ -893,7 +893,7 @@ static const luaL_Reg parser_methods[] = {
     {"one_or_more", l_parser_one_or_more},
     {"zero_or_more", l_parser_zero_or_more},
     {"take_after", l_parser_take_after},
-    {"right", l_parser_right},
+    {"drop_for", l_parser_drop_for},
     {"pair", l_parser_pair},
     {"parse", l_parser_parse},
     {NULL, NULL}};

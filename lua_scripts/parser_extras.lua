@@ -20,8 +20,8 @@ end
 
 function M.quoted_string()
   return M.space0()
-    :right(M.literal('"')
-      :right(
+    :drop_for(M.literal('"')
+      :drop_for(
         M.any_char()
         :pred(function(char) return char ~= '"'
         end):zero_or_more():take_after(M.literal('"'))

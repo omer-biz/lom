@@ -39,7 +39,7 @@ typedef enum {
   P_ONE_OR_MORE,
   P_ZERO_OR_MORE,
   P_TAKE_AFTER,
-  P_RIGHT,
+  P_DROP_FOR,
   P_PAIR,
   P_LAZY,
 } ParserKind;
@@ -174,11 +174,11 @@ static Parser *make_take_after(lua_State *L, Parser *left, Parser *right);
 typedef struct {
   Parser *left;
   Parser *right;
-} RightData;
+} DropForData;
 
-static ParseResult right_parse(Parser *p, const char *input);
-static void right_destroy(Parser *p);
-static Parser *make_right(lua_State *L, Parser *left, Parser *right);
+static ParseResult drop_for_parse(Parser *p, const char *input);
+static void drop_for_destroy(Parser *p);
+static Parser *make_drop_for(lua_State *L, Parser *left, Parser *right);
 
 /* ---------------------------
    repetition combinators

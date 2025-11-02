@@ -7,8 +7,8 @@ local result1 = #out == 4 and rest == "123"
 
 -- since we have a whitespace parser now we can do
 local quoted_string = P.space0()
-  :right(P.literal('"')
-  :right(
+  :drop_for(P.literal('"')
+  :drop_for(
     P.any_char()
     :pred(function(char)
             return char ~= '"'

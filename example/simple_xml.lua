@@ -3,10 +3,10 @@ local P = require("parser")
 
 local attribute_pair = P.identifier()
   :pair(P.literal("=")
-        :right(P.quoted_string()))
+        :drop_for(P.quoted_string()))
 
 local attributes = P.space1()
-  :right(attribute_pair)
+  :drop_for(attribute_pair)
   :zero_or_more()
 
 local out, rest = attributes:parse(' one="1"    two="2"')
@@ -17,7 +17,7 @@ end
 
 ---------------------
 
-local element_start = P.literal("<"):right(P.identifier():pair(attributes))
+local element_start = P.literal("<"):drop_for(P.identifier():pair(attributes))
 
 local function restructure(b)
   a = {}
@@ -58,13 +58,13 @@ end
 
 local function whitespace_wrap(parser)
   return P.space0()
-    :right(parser:take_after(P.space0()))
+    :drop_for(parser:take_after(P.space0()))
 end
 
 
 local function close_element(expected_name)
   return P.literal("</")
-    :right(P.identifier():take_after(P.literal(">")))
+    :drop_for(P.identifier():take_after(P.literal(">")))
     :pred(function(name) return name == expected_name end)
 end
 
@@ -84,7 +84,7 @@ end)
 
 local function whitespace_wrap(parser)
   return P.space0()
-    :right(parser:take_after(P.space0()))
+    :drop_for(parser:take_after(P.space0()))
 end
 
 ----------------------------
