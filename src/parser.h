@@ -4,12 +4,8 @@
 
 #ifndef __PARSER_LUA
 
-#include <ctype.h>
 #include <lauxlib.h>
 #include <lua.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 typedef struct {
   int ok;           // 1 success, 0 failure
