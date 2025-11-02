@@ -67,6 +67,7 @@ typedef struct {
 static ParseResult literal_parse(Parser *p, const char *input);
 static void literal_destroy(Parser *p);
 static Parser *make_literal(lua_State *L, const char *s);
+static char *inspect_literal(Parser *p);
 
 /* ---------------------------
    any_char parser

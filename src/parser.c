@@ -83,6 +83,15 @@ static Parser *make_literal(lua_State *L, const char *s) {
   return parser_new(P_LITERAL, literal_parse, literal_destroy, d, L);
 }
 
+static char *inspect_literal(Parser *p) {
+  LiteralData *d = (LiteralData *)p->data;
+  char *buff = malloc(64);
+
+  int s = snprintf(buff, 64, "literal(\"%s\")", d->lit);
+
+  return buff;
+}
+
 static ParseResult any_char_parse(Parser *p, const char *input) {
   (void)p;
   if (!input || input[0] == '\0')
