@@ -40,7 +40,7 @@ END_TEST
 START_TEST(test_identifier) { run_lua_test("test_identifier.lua"); }
 END_TEST
 
-START_TEST(test_left) { run_lua_test("./test_left.lua"); }
+START_TEST(test_take_after) { run_lua_test("./test_take_after.lua"); }
 END_TEST
 
 START_TEST(test_pair) { run_lua_test("./test_pair.lua"); }
@@ -88,7 +88,7 @@ Suite *parser_suite(void) {
 
   tcase_add_test(tc, test_literal);
   tcase_add_test(tc, test_identifier);
-  tcase_add_test(tc, test_left);
+  tcase_add_test(tc, test_take_after);
   tcase_add_test(tc, test_pair);
   tcase_add_test(tc, test_one_or_more);
   tcase_add_test(tc, test_zero_or_more);

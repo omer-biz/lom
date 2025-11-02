@@ -38,7 +38,7 @@ typedef enum {
   P_PRED,
   P_ONE_OR_MORE,
   P_ZERO_OR_MORE,
-  P_LEFT,
+  P_TAKE_AFTER,
   P_RIGHT,
   P_PAIR,
   P_LAZY,
@@ -160,11 +160,11 @@ static Parser *make_pred(lua_State *L, Parser *inner, int func_ref);
 typedef struct {
   Parser *left;
   Parser *right;
-} LeftData;
+} TakeAfterData;
 
-static ParseResult left_parse(Parser *p, const char *input);
-static void left_destroy(Parser *p);
-static Parser *make_left(lua_State *L, Parser *left, Parser *right);
+static ParseResult take_after_parse(Parser *p, const char *input);
+static void take_after_destroy(Parser *p);
+static Parser *make_take_after(lua_State *L, Parser *left, Parser *right);
 
 /* ---------------------------
   right combinator (returns right output)

@@ -33,7 +33,7 @@ local function extract_header(out)
 end
 
 local single_element = element_start
-  :left(P.literal("/>"))
+  :take_after(P.literal("/>"))
   :map(extract_header)
 
 local input = '<div class="float" id="num" foo="bar"/>'
@@ -46,7 +46,7 @@ end
 
 ---------------------
 
-local open_element = element_start:left(P.literal(">")):map(extract_header)
+local open_element = element_start:take_after(P.literal(">")):map(extract_header)
 local out, rest = open_element:parse('<one two="three">rest')
 
 local attrs = out["attributes"]
@@ -58,13 +58,13 @@ end
 
 local function whitespace_wrap(parser)
   return P.space0()
-    :right(parser:left(P.space0()))
+    :right(parser:take_after(P.space0()))
 end
 
 
 local function close_element(expected_name)
   return P.literal("</")
-    :right(P.identifier():left(P.literal(">")))
+    :right(P.identifier():take_after(P.literal(">")))
     :pred(function(name) return name == expected_name end)
 end
 
@@ -72,7 +72,7 @@ local element -- forward declaration: to asist with lazy evaluation
 element = P.lazy(function()
   local parent_element = open_element:and_then(function(el)
     return element:zero_or_more()
-      :left(close_element(el.name))
+      :take_after(close_element(el.name))
       :map(function(children)
         el.children = children
         return el
@@ -84,7 +84,7 @@ end)
 
 local function whitespace_wrap(parser)
   return P.space0()
-    :right(parser:left(P.space0()))
+    :right(parser:take_after(P.space0()))
 end
 
 ----------------------------

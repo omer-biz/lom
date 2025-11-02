@@ -13,7 +13,7 @@ local quoted_string = P.space0()
     :pred(function(char)
             return char ~= '"'
           end
-         ):zero_or_more():left(P.literal('"'))
+         ):zero_or_more():take_after(P.literal('"'))
         ):map(function(chars) return table.concat(chars, "") end))
 
 local out, rest = quoted_string:parse('   "hello" another think here')

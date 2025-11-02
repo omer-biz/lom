@@ -340,8 +340,8 @@ static Parser *make_pred(lua_State *L, Parser *inner, int func_ref) {
 // since we are using it as a method lit1:left(lit2) doesn't make sense
 // instead: lit1:take_after(lit2) makes it clear, we are taking lit1 after
 // parsing lit2
-static ParseResult left_parse(Parser *p, const char *input) {
-  LeftData *d = (LeftData *)p->data;
+static ParseResult take_after_parse(Parser *p, const char *input) {
+  TakeAfterData *d = (TakeAfterData *)p->data;
   lua_State *L = p->L;
 
   ParseResult r1 = d->left->parse(d->left, input);
@@ -365,8 +365,8 @@ static ParseResult left_parse(Parser *p, const char *input) {
   return parse_ok(r2.rest, r1.lua_ref);
 }
 
-static void left_destroy(Parser *p) {
-  LeftData *d = (LeftData *)p->data;
+static void take_after_destroy(Parser *p) {
+  TakeAfterData *d = (TakeAfterData *)p->data;
 
   if (d) {
     if (d->left)
@@ -378,8 +378,8 @@ static void left_destroy(Parser *p) {
   }
 }
 
-static Parser *make_left(lua_State *L, Parser *left, Parser *right) {
-  LeftData *d = (LeftData *)malloc(sizeof(LeftData));
+static Parser *make_take_after(lua_State *L, Parser *left, Parser *right) {
+  TakeAfterData *d = (TakeAfterData *)malloc(sizeof(TakeAfterData));
 
   d->left = left;
   parser_ref(left);
@@ -387,13 +387,13 @@ static Parser *make_left(lua_State *L, Parser *left, Parser *right) {
   d->right = right;
   parser_ref(right);
 
-  return parser_new(P_LEFT, left_parse, left_destroy, d, L);
+  return parser_new(P_TAKE_AFTER, take_after_parse, take_after_destroy, d, L);
 }
 
 // TODO: rename to drop_for
 // since we are using it as a method lit1:right(lit2) doesn't make sense
-// instead: lit1:drop_for(lit2) makes it clear, we are droping lit1 for lit2 after
-// parsing lit1
+// instead: lit1:drop_for(lit2) makes it clear, we are droping lit1 for lit2
+// after parsing lit1
 static ParseResult right_parse(Parser *p, const char *input) {
   RightData *d = (RightData *)p->data;
   lua_State *L = p->L;
@@ -588,9 +588,8 @@ static Parser *make_pair(lua_State *L, Parser *left, Parser *right) {
   return parser_new(P_PAIR, pair_parse, pair_destroy, d, L);
 }
 
-
 static ParseResult lazy_parse(Parser *p, const char *input) {
-  LazyData *d = (LazyData *) p->data;
+  LazyData *d = (LazyData *)p->data;
   lua_State *L = p->L;
 
   lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
@@ -603,7 +602,7 @@ static ParseResult lazy_parse(Parser *p, const char *input) {
     return parse_err(input);
   }
 
-  Parser **pp = (Parser **) luaL_testudata(L, -1, "Parser");
+  Parser **pp = (Parser **)luaL_testudata(L, -1, "Parser");
 
   if (!pp) {
     lua_pop(L, 1);
@@ -622,7 +621,7 @@ static ParseResult lazy_parse(Parser *p, const char *input) {
 }
 
 static void lazy_destroy(Parser *p) {
-  LazyData *d = (LazyData *) p->data;
+  LazyData *d = (LazyData *)p->data;
   if (d) {
     if (d->func_ref != LUA_NOREF) {
       luaL_unref(p->L, LUA_REGISTRYINDEX, d->func_ref);
@@ -632,9 +631,8 @@ static void lazy_destroy(Parser *p) {
 }
 
 static Parser *make_lazy(lua_State *L, int func_ref) {
-  LazyData *d = (LazyData *) malloc(sizeof(LazyData));
+  LazyData *d = (LazyData *)malloc(sizeof(LazyData));
   d->func_ref = func_ref;
-
 
   return parser_new(P_LAZY, lazy_parse, lazy_destroy, d, L);
 }
@@ -774,11 +772,11 @@ static int l_parser_parse(lua_State *L) {
   }
 }
 
-static int l_parser_left(lua_State *L) {
+static int l_parser_take_after(lua_State *L) {
   Parser *left = check_parser_ud(L, 1);
   Parser *right = check_parser_ud(L, 2);
 
-  Parser *p = make_left(L, left, right);
+  Parser *p = make_take_after(L, left, right);
   push_parser_ud(L, p);
   parser_unref(p);
 
@@ -862,8 +860,8 @@ static int l_parser_tostring(lua_State *L) {
   case P_ZERO_OR_MORE:
     kind = "zero_or_more";
     break;
-  case P_LEFT:
-    kind = "left";
+  case P_TAKE_AFTER:
+    kind = "take_after";
     break;
   case P_RIGHT:
     kind = "right";
@@ -894,7 +892,7 @@ static const luaL_Reg parser_methods[] = {
     {"pred", l_parser_pred},
     {"one_or_more", l_parser_one_or_more},
     {"zero_or_more", l_parser_zero_or_more},
-    {"left", l_parser_left},
+    {"take_after", l_parser_take_after},
     {"right", l_parser_right},
     {"pair", l_parser_pair},
     {"parse", l_parser_parse},

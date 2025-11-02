@@ -24,7 +24,7 @@ function M.quoted_string()
       :right(
         M.any_char()
         :pred(function(char) return char ~= '"'
-        end):zero_or_more():left(M.literal('"'))
+        end):zero_or_more():take_after(M.literal('"'))
       ):map(function(chars) return table.concat(chars, "") end)
     )
 end
