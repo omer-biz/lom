@@ -3,6 +3,9 @@
 #ifndef __LOM_INSPECT
 #define __LOM_INSPECT
 
+static char *inspect_literal(Parser *p, int indent);
+static char *inspect_any_char(Parser *p, int indent);
+
 static char *inspect_binary(const char *name, Parser *left, Parser *right,
                             int indent);
 

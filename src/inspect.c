@@ -3,6 +3,36 @@
 #include "utils.h"
 #include <stdio.h>
 
+static char *inspect_literal(Parser *p, int indent) {
+  LiteralData *d = (LiteralData *)p->data;
+  char *ind = make_indent(indent);
+  int size = snprintf(NULL, 0, "%sliteral(\"%s\")\n", ind, d->lit) + 1;
+  char *buff = malloc(size);
+
+  if (buff == NULL) {
+    free(ind);
+    return NULL;
+  }
+
+  snprintf(buff, size, "%sliteral(\"%s\")\n", ind, d->lit);
+
+  return buff;
+}
+
+static char *inspect_any_char(Parser *p, int indent) {
+  (void)p;
+  char *ind = make_indent(indent);
+  int size = snprintf(NULL, 0, "%sany_char()", ind);
+  char *buff = malloc(size);
+
+  if (buff == NULL) {
+    free(ind);
+    return NULL;
+  }
+
+  return buff;
+}
+
 static char *inspect_binary(const char *name, Parser *left, Parser *right,
                             int indent) {
   char *ind = make_indent(indent);
