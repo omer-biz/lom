@@ -28,4 +28,19 @@ static char *inspect_pair(Parser *p, int indent) {
   return inspect_binary("pair", d->left, d->right, indent);
 }
 
+static char *inspect_take_after(Parser *p, int indent) {
+  TakeAfterData *d = (TakeAfterData *)p->data;
+  return inspect_binary("take_after", d->left, d->right, indent);
+}
+
+static char *inspect_drop_for(Parser *p, int indent) {
+  DropForData *d = (DropForData *)p->data;
+  return inspect_binary("drop_for", d->left, d->right, indent);
+}
+
+static char *inspect_or_else(Parser *p, int indent) {
+    OrData *d = (OrData *) p->data;
+    return inspect_binary("or_else", d->left, d->right, indent);
+}
+
 static char *inspect_parser(Parser *p, int indent) { return ""; }
