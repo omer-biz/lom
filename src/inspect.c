@@ -55,10 +55,9 @@ static char *inspect_one_or_more(Parser *p, int indent) {
 
   char *buff = malloc(size);
   if (!buff) {
-  free(ind);
-  free(inner);
+    free(ind);
+    free(inner);
     return NULL;
-
   }
   snprintf(buff, size, "%sone_or_more(\n%s\n%s)\n", ind, inner, ind);
 
@@ -134,6 +133,30 @@ static char *inspect_map(Parser *p, int indent) {
 static char *inspect_and_then(Parser *p, int indent) {
   AndThenData *d = (AndThenData *)p->data;
   return inspect_unary_with_func("and_then", d->inner, d->func_ref, indent);
+}
+
+static char *inspect_lazy(Parser *p, int indent) {
+  LazyData *d = (LazyData *)p->data;
+
+  char *ind = make_indent(indent);
+  char *func_desk = describe_lua_function(p->L, d->func_ref);
+
+  int size = snprintf(NULL, 0, "%slazy(%s)\n", ind, func_desk) + 1;
+
+  char *buff = malloc(size);
+  if (!buff) {
+    free(ind);
+    free(func_desk);
+
+    return NULL;
+  }
+
+  snprintf(buff, size, "%slazy(%s)\n", ind, func_desk);
+
+  free(ind);
+  free(func_desk);
+
+  return buff;
 }
 
 static char *inspect_parser(Parser *p, int indent) { return ""; }
