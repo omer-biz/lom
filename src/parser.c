@@ -99,8 +99,6 @@ static ParseResult any_char_parse(Parser *p, const char *input) {
   else if ((uc & 0xF8) == 0xF0)
     len = 4;
 
-  char *out = (char *)malloc(len + 1);
-
   lua_pushlstring(p->L, input, len);
   int ref = luaL_ref(p->L, LUA_REGISTRYINDEX);
 

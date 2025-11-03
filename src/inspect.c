@@ -189,4 +189,39 @@ static char *inspect_lazy(Parser *p, int indent) {
   return buff;
 }
 
-static char *inspect_parser(Parser *p, int indent) { return ""; }
+static char *inspect_parser(Parser *p, int indent) {
+  // TODO: could crash if recursive combinators are used
+  // we don't detect cycles yet.
+  switch (p->kind) {
+  case P_LITERAL:
+    return inspect_literal(p, indent);
+  case P_ANY_CHAR:
+    return inspect_any_char(p, indent);
+
+  case P_PAIR:
+    return inspect_pair(p, indent);
+  case P_OR_ELSE:
+    return inspect_or_else(p, indent);
+  case P_TAKE_AFTER:
+    return inspect_take_after(p, indent);
+  case P_DROP_FOR:
+    return inspect_drop_for(p, indent);
+
+  case P_MAP:
+    return inspect_map(p, indent);
+  case P_AND_THEN:
+    return inspect_and_then(p, indent);
+  case P_PRED:
+    return inspect_pred(p, indent);
+
+  case P_ONE_OR_MORE:
+    return inspect_one_or_more(p, indent);
+  case P_ZERO_OR_MORE:
+    return inspect_zero_or_more(p, indent);
+
+  case P_LAZY:
+    return inspect_lazy(p, indent);
+  }
+  char *buff = strdup("<unknow>");
+  return buff;
+}
