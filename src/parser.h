@@ -27,7 +27,6 @@ typedef void (*destroy_fn_t)(Parser *p);
 typedef enum {
   P_LITERAL,
   P_ANY_CHAR,
-  P_IDENTIFIER,
   P_MAP,
   P_AND_THEN,
   P_OR_ELSE,
@@ -67,7 +66,6 @@ typedef struct {
 static ParseResult literal_parse(Parser *p, const char *input);
 static void literal_destroy(Parser *p);
 static Parser *make_literal(lua_State *L, const char *s);
-static char *inspect_literal(Parser *p);
 
 /* ---------------------------
    any_char parser
@@ -80,19 +78,6 @@ typedef struct {
 static ParseResult any_char_parse(Parser *p, const char *input);
 static void any_char_destroy(Parser *p);
 static Parser *make_any_char(lua_State *L);
-static char *inspect_any_char(Parser *p);
-
-/* ---------------------------
-   identifier parser
-   --------------------------- */
-
-typedef struct {
-  int dummy;
-} IdentData;
-
-static ParseResult identifier_parse(Parser *p, const char *input);
-static void identifier_destroy(Parser *p);
-static Parser *make_identifier(lua_State *L);
 
 /* ---------------------------
    Map combinator
@@ -232,9 +217,6 @@ static int l_parser_literal(lua_State *L);
 
 /* parser.any_char() */
 static int l_parser_any_char(lua_State *L);
-
-/* parser.identifier() */
-static int l_parser_identifier(lua_State *L);
 
 /* p:map(function) */
 static int l_parser_map(lua_State *L);

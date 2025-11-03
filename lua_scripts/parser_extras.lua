@@ -29,6 +29,12 @@ function M.quoted_string()
     )
 end
 
+function M.identifier()
+  return M.any_char()
+    :zero_or_more()
+    :map(function(chars) return table.concat(chars, "") end)
+end
+
 
 function M.utils.print(t, indent)
   indent = indent or 0

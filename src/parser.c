@@ -83,15 +83,6 @@ static Parser *make_literal(lua_State *L, const char *s) {
   return parser_new(P_LITERAL, literal_parse, literal_destroy, d, L);
 }
 
-static char *inspect_literal(Parser *p) {
-  LiteralData *d = (LiteralData *)p->data;
-  char *buff = malloc(64);
-
-  int s = snprintf(buff, 64, "literal(\"%s\")", d->lit);
-
-  return buff;
-}
-
 static ParseResult any_char_parse(Parser *p, const char *input) {
   (void)p;
   if (!input || input[0] == '\0')
@@ -121,46 +112,6 @@ static void any_char_destroy(Parser *p) { free(p->data); }
 static Parser *make_any_char(lua_State *L) {
   AnyCharData *d = (AnyCharData *)malloc(sizeof(AnyCharData));
   return parser_new(P_ANY_CHAR, any_char_parse, any_char_destroy, d, L);
-}
-
-static char *inspect_any_char(Parser *p) { (void)p;
-  return "any_char";
-}
-
-static ParseResult identifier_parse(Parser *p, const char *input) {
-  (void)p;
-  if (!input || input[0] == '\0')
-    return parse_err(input);
-
-  size_t i = 0;
-  size_t len = strlen(input);
-  if (i >= len)
-    return parse_err(input);
-
-  unsigned char uc = (unsigned char)input[i];
-  if (!isalnum(uc))
-    return parse_err(input);
-
-  i++;
-  while (i < len) {
-    unsigned char c = (unsigned char)input[i];
-    if (isalnum(c) || c == '-' || c == '_')
-      i++;
-    else
-      break;
-  }
-
-  lua_pushlstring(p->L, input, i);
-  int ref = luaL_ref(p->L, LUA_REGISTRYINDEX);
-
-  return parse_ok(input + i, ref);
-}
-
-static void identifier_destroy(Parser *p) { free(p->data); }
-
-static Parser *make_identifier(lua_State *L) {
-  IdentData *d = (IdentData *)malloc(sizeof(IdentData));
-  return parser_new(P_IDENTIFIER, identifier_parse, identifier_destroy, d, L);
 }
 
 static ParseResult map_parse(Parser *p, const char *input) {
@@ -698,14 +649,6 @@ static int l_parser_any_char(lua_State *L) {
   return 1;
 }
 
-/* parser.identifier() */
-static int l_parser_identifier(lua_State *L) {
-  Parser *p = make_identifier(L);
-  push_parser_ud(L, p);
-  parser_unref(p);
-  return 1;
-}
-
 /* p:map(function) */
 static int l_parser_map(lua_State *L) {
   Parser *inner = check_parser_ud(L, 1);
@@ -858,9 +801,6 @@ static int l_parser_tostring(lua_State *L) {
   case P_ANY_CHAR:
     kind = "any_char";
     break;
-  case P_IDENTIFIER:
-    kind = "identifier";
-    break;
   case P_MAP:
     kind = "map";
     break;
@@ -942,8 +882,6 @@ int luaopen_parser(lua_State *L) {
   lua_setfield(L, -2, "literal");
   lua_pushcfunction(L, l_parser_any_char);
   lua_setfield(L, -2, "any_char");
-  lua_pushcfunction(L, l_parser_identifier);
-  lua_setfield(L, -2, "identifier");
   lua_pushcfunction(L, l_parser_lazy);
   lua_setfield(L, -2, "lazy");
 
