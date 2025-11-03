@@ -39,8 +39,49 @@ static char *inspect_drop_for(Parser *p, int indent) {
 }
 
 static char *inspect_or_else(Parser *p, int indent) {
-    OrData *d = (OrData *) p->data;
-    return inspect_binary("or_else", d->left, d->right, indent);
+  OrData *d = (OrData *)p->data;
+  return inspect_binary("or_else", d->left, d->right, indent);
+}
+
+static char *inspect_one_or_more(Parser *p, int indent) {
+  RepData *d = (RepData *)p->data;
+
+  char *ind = make_indent(indent);
+  char *inner = inspect_parser(d->inner, indent + 1);
+
+  int size =
+      snprintf(NULL, 0, "%sone_or_more(\n%s\n%s)\n", ind, inner, ind) + 1;
+
+  char *buff = malloc(size);
+  if (!buff)
+    return NULL;
+  snprintf(buff, size, "%sone_or_more(\n%s\n%s)\n", ind, inner, ind);
+
+  free(ind);
+  free(inner);
+
+  return buff;
+}
+
+
+static char *inspect_zero_or_more(Parser *p, int indent) {
+  RepData *d = (RepData *)p->data;
+
+  char *ind = make_indent(indent);
+  char *inner = inspect_parser(d->inner, indent + 1);
+
+  int size =
+      snprintf(NULL, 0, "%szero_or_more(\n%s\n%s)\n", ind, inner, ind) + 1;
+
+  char *buff = malloc(size);
+  if (!buff)
+    return NULL;
+  snprintf(buff, size, "%szero_or_more(\n%s\n%s)\n", ind, inner, ind);
+
+  free(ind);
+  free(inner);
+
+  return buff;
 }
 
 static char *inspect_parser(Parser *p, int indent) { return ""; }
