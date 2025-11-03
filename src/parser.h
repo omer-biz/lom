@@ -80,6 +80,7 @@ typedef struct {
 static ParseResult any_char_parse(Parser *p, const char *input);
 static void any_char_destroy(Parser *p);
 static Parser *make_any_char(lua_State *L);
+static char *inspect_any_char(Parser *p);
 
 /* ---------------------------
    identifier parser

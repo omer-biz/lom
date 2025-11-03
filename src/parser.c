@@ -117,9 +117,14 @@ static ParseResult any_char_parse(Parser *p, const char *input) {
 }
 
 static void any_char_destroy(Parser *p) { free(p->data); }
+
 static Parser *make_any_char(lua_State *L) {
   AnyCharData *d = (AnyCharData *)malloc(sizeof(AnyCharData));
   return parser_new(P_ANY_CHAR, any_char_parse, any_char_destroy, d, L);
+}
+
+static char *inspect_any_char(Parser *p) { (void)p;
+  return "any_char";
 }
 
 static ParseResult identifier_parse(Parser *p, const char *input) {
