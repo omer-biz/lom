@@ -32,11 +32,14 @@ int lom_init(void) {
   return 1;
 }
 
-int lom_run(const char *script) {
+int lom_run(const char *script, const char *input) {
   if (!G_L) {
     fprintf(stderr, "[lom] not initialized");
     return 0;
   }
+
+  lua_pushstring(G_L, input);
+  lua_setglobal(G_L, "_INPUT");
 
   if (luaL_dostring(G_L, script) != LUA_OK) {
     fprintf(stderr, "Lua error: %s\n", lua_tostring(G_L, -1));

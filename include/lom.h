@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 int lom_init(void);
-int lom_run(const char *script);
+int lom_run(const char *script, const char *input);
 void lom_close(void);
 
 #ifdef __cplusplus
