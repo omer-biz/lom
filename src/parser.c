@@ -261,13 +261,17 @@ static Parser *make_or(lua_State *L, Parser *a, Parser *b) {
 
 static ParseResult pred_parse(Parser *p, const char *input) {
   PredData *d = (PredData *)p->data;
-  ParseResult r = d->inner->parse(d->inner, input);
-  if (!r.ok)
-    return r;
   lua_State *L = p->L;
+
+  const char *start = input;
+  ParseResult inner_r = d->inner->parse(d->inner, input);
+  if (!inner_r.ok) {
+    return inner_r;
+  }
+
   lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
-  if (r.lua_ref != LUA_NOREF) {
-    lua_rawgeti(L, LUA_REGISTRYINDEX, r.lua_ref);
+  if (inner_r.lua_ref != LUA_NOREF) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, inner_r.lua_ref);
   } else {
     lua_pushnil(L);
   }
@@ -276,13 +280,21 @@ static ParseResult pred_parse(Parser *p, const char *input) {
     const char *err = lua_tostring(L, -1);
     fprintf(stderr, "pred callback error: %s\n", err ? err : "(unknown)");
     lua_pop(L, 1);
-    return parse_err(input);
+    return parse_err(start);
   }
+
   int truthy = lua_toboolean(L, -1);
   lua_pop(L, 1);
-  if (truthy)
-    return r;
-  return parse_err(input);
+
+  if (truthy) {
+    return inner_r;
+  }
+
+  if (inner_r.lua_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, inner_r.lua_ref);
+  }
+
+  return parse_err(start);
 }
 
 static void pred_destroy(Parser *p) {
