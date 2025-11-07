@@ -31,8 +31,20 @@ end
 
 function M.identifier()
   return M.any_char()
-    :zero_or_more()
-    :map(function(chars) return table.concat(chars, "") end)
+    :pred(function(ch)
+      return ch:match("[%a_]") ~= nil
+    end)
+    :and_then(function(first)
+      return M.any_char()
+        :pred(function(ch)
+          return ch:match("[%w_%-]") ~= nil
+        end)
+        :zero_or_more()
+        :map(function(rest)
+          table.insert(rest, 1, first)
+          return table.concat(rest, "")
+        end)
+    end)
 end
 
 
