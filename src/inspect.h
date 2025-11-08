@@ -25,6 +25,6 @@ static char *inspect_and_then(Parser *p, int indent);
 
 static char *inspect_lazy(Parser *p, int indent);
 
-static char *inspect_parser(Parser *p, int ident);
+char *inspect_parser(Parser *p, int ident);
 
 #endif

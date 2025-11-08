@@ -189,7 +189,7 @@ static char *inspect_lazy(Parser *p, int indent) {
   return buff;
 }
 
-static char *inspect_parser(Parser *p, int indent) {
+char *inspect_parser(Parser *p, int indent) {
   // TODO: could crash if recursive combinators are used
   // we don't detect cycles yet.
   switch (p->kind) {
