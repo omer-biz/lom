@@ -635,6 +635,10 @@ static void push_parser_ud(lua_State *L, Parser *p) {
   parser_ref(p); // increment for userdata owner
   luaL_getmetatable(L, "Parser");
   lua_setmetatable(L, -2);
+
+  // for custom lua user values
+  lua_newtable(L);
+  lua_setuservalue(L, -2);
 }
 
 /* ---------------------------
@@ -867,14 +871,51 @@ static const luaL_Reg parser_methods[] = {
     {"parse", l_parser_parse},
     {NULL, NULL}};
 
+static int parser_index(lua_State *L) {
+  luaL_getmetatable(L, "Parser");
+
+  // search through the C functions
+  lua_getfield(L, -1, "__methods");
+  lua_pushvalue(L, 2);
+  lua_rawget(L, -2);
+
+  if (!lua_isnil(L, -1)) {
+    return 1; // found a C function
+  }
+
+  lua_pop(L, 2);
+
+  // check user defined lua values
+  lua_getuservalue(L, 1);
+  lua_pushvalue(L, 2);
+  lua_gettable(L, -2);
+  return 1;
+}
+
+static int parser_newindex(lua_State *L) {
+  lua_getuservalue(L, 1); // parser
+  lua_pushvalue(L, 2);    // key
+  lua_pushvalue(L, 3);    // value
+  lua_settable(L, -3);
+  return 0;
+}
+
 int luaopen_parser(lua_State *L) {
   // create Parser metatable
   luaL_newmetatable(L, "Parser");
 
-  // set __index to methods table
+  // native C parsing functions as methods
   lua_newtable(L);
   luaL_setfuncs(L, parser_methods, 0);
+  lua_setfield(L, -2, "__methods");
+
+  // set __index to methods, and uservalues table
+  lua_pushcfunction(L, parser_index);
   lua_setfield(L, -2, "__index");
+
+  // set uservalues table
+  lua_pushcfunction(L, parser_newindex);
+  lua_setfield(L, -2, "__newindex");
 
   // set metamethods
   lua_pushcfunction(L, l_parser_gc);

@@ -6,45 +6,65 @@ local function is_whitespace(str)
   return str:match("^%s*$") ~= nil
 end
 
+local function set_inspect(parser, inspect_str)
+  parser.inspect = inspect_str
+  return parser
+end
+
 function M.whitespace_char()
-  return M.any_char():pred(is_whitespace)
+  return set_inspect(
+    M.any_char():pred(is_whitespace),
+    "whitespace_char"
+  )
 end
 
 function M.space1()
-  return M.whitespace_char():one_or_more()
+  return set_inspect(
+    M.whitespace_char():one_or_more(),
+    "space1"
+  )
 end
 
 function M.space0()
-  return M.whitespace_char():zero_or_more()
+  return set_inspect(
+    M.whitespace_char():zero_or_more(),
+    "space0"
+  )
 end
 
 function M.quoted_string()
-  return M.space0()
-    :drop_for(M.literal('"')
-      :drop_for(
-        M.any_char()
-        :pred(function(char) return char ~= '"'
-        end):zero_or_more():take_after(M.literal('"'))
-      ):map(function(chars) return table.concat(chars, "") end)
-    )
+  return set_inspect(
+    M.space0()
+      :drop_for(M.literal('"')
+        :drop_for(
+          M.any_char()
+          :pred(function(char) return char ~= '"'
+          end):zero_or_more():take_after(M.literal('"'))
+        ):map(function(chars) return table.concat(chars, "") end)
+      ),
+      "quoted_string"
+  )
 end
 
 function M.identifier()
-  return M.any_char()
-    :pred(function(ch)
-      return ch:match("[%a_]") ~= nil
-    end)
-    :and_then(function(first)
-      return M.any_char()
-        :pred(function(ch)
-          return ch:match("[%w_%-]") ~= nil
-        end)
-        :zero_or_more()
-        :map(function(rest)
-          table.insert(rest, 1, first)
-          return table.concat(rest, "")
-        end)
-    end)
+  return set_inspect(
+    M.any_char()
+      :pred(function(ch)
+        return ch:match("[%a_]") ~= nil
+      end)
+      :and_then(function(first)
+        return M.any_char()
+          :pred(function(ch)
+            return ch:match("[%w_%-]") ~= nil
+          end)
+          :zero_or_more()
+          :map(function(rest)
+            table.insert(rest, 1, first)
+            return table.concat(rest, "")
+          end)
+      end),
+     "identifier"
+  )
 end
 
 
