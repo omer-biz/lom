@@ -13,7 +13,7 @@ enable_testing()
 add_subdirectory(tests)
 
 # build liblom.a
-add_library(lom STATIC src/parser.c src/lom.c)
+add_library(lom STATIC src/parser.c src/lom.c src/inspect.c)
 target_include_directories(lom PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_include_directories(lom PUBLIC ${CMAKE_SOURCE_DIR}/include)

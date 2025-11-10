@@ -1,9 +1,10 @@
-#include <ctype.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "inspect.h"
 #include "parser.h"
 
 /* ---------------------------
@@ -794,6 +795,21 @@ static int l_parser_lazy(lua_State *L) {
   return 1;
 }
 
+static int l_parser_inspect(lua_State *L) {
+  Parser *inner = check_parser_ud(L, 1);
+  int ident = luaL_checkinteger(L, 2);
+
+  const char *inspected = inspect_parser(inner, ident);
+  if (inspected != NULL) {
+    lua_pushstring(L, inspected);
+    free((void *)inspected);
+  } else {
+    lua_pushnil(L);
+  }
+
+  return 1;
+}
+
 /* __gc metamethod: free the userdata-owned reference */
 static int l_parser_gc(lua_State *L) {
   Parser **ud = (Parser **)luaL_checkudata(L, 1, "Parser");
@@ -935,6 +951,8 @@ int luaopen_parser(lua_State *L) {
   lua_setfield(L, -2, "any_char");
   lua_pushcfunction(L, l_parser_lazy);
   lua_setfield(L, -2, "lazy");
+  lua_pushcfunction(L, l_parser_inspect);
+  lua_setfield(L, -2, "inspect");
 
   size_t parser_extras_lua_len = strlen(PARSER_EXTRAS_LUA);
 
