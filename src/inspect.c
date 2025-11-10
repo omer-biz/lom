@@ -123,37 +123,42 @@ static char *inspect_zero_or_more(Parser *p, int indent) {
   return buff;
 }
 
-static char *inspect_unary_with_func(const char *name, int indent) {
+static char *inspect_unary_with_func(const char *name, Parser *inner,
+                                     int indent) {
   char *ind = make_indent(indent);
-  const char *templ = "%s%s(<function>)";
+  const char *templ = "%s%s(<function>\n%s%s\n)";
+  char *inner_str = inspect_parser(inner, indent + 1);
 
-  int size = snprintf(NULL, 0, templ, ind, name) + 1;
+  int size = snprintf(NULL, 0, templ, ind, name, ind, inner_str) + 1;
   char *buff = malloc(size);
   if (!buff) {
     free(ind);
+    free(inner_str);
     return NULL;
   }
 
-  snprintf(buff, size, templ, ind, name);
+  snprintf(buff, size, templ, ind, name, ind, inner_str);
 
   free(ind);
+  free(inner_str);
 
   return buff;
+  return strdup("mappp");
 }
 
 static char *inspect_pred(Parser *p, int indent) {
   PredData *d = (PredData *)p->data;
-  return inspect_unary_with_func("pred", indent);
+  return inspect_unary_with_func("pred", d->inner, indent);
 }
 
 static char *inspect_map(Parser *p, int indent) {
   MapData *d = (MapData *)p->data;
-  return inspect_unary_with_func("map", indent);
+  return inspect_unary_with_func("map", d->inner, indent);
 }
 
 static char *inspect_and_then(Parser *p, int indent) {
   AndThenData *d = (AndThenData *)p->data;
-  return inspect_unary_with_func("and_then", indent);
+  return inspect_unary_with_func("and_then", d->inner, indent);
 }
 
 static char *inspect_lazy(Parser *p, int indent) {

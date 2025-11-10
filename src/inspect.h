@@ -17,7 +17,8 @@ static char *inspect_or_else(Parser *p, int indnet);
 static char *inspect_one_or_more(Parser *p, int indent);
 static char *inspect_zero_or_more(Parser *p, int indent);
 
-static char *inspect_unary_with_func(const char *name, int indent);
+static char *inspect_unary_with_func(const char *name, Parser *inner,
+                                     int indent);
 static char *inspect_pred(Parser *p, int indent);
 static char *inspect_map(Parser *p, int indent);
 static char *inspect_and_then(Parser *p, int indent);
