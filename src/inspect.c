@@ -1,6 +1,8 @@
 #include "inspect.h"
 #include "parser.h"
 #include "utils.h"
+#include <lauxlib.h>
+#include <lua.h>
 #include <stdio.h>
 
 static char *inspect_literal(Parser *p, int indent) {
@@ -158,9 +160,9 @@ static char *inspect_lazy(Parser *p, int indent) {
   LazyData *d = (LazyData *)p->data;
 
   char *ind = make_indent(indent);
-  const char *templ =  "%slazy(<function>)\n";
+  const char *templ = "%slazy(<function>)\n";
 
-  int size = snprintf(NULL, 0,templ, ind) + 1;
+  int size = snprintf(NULL, 0, templ, ind) + 1;
 
   char *buff = malloc(size);
   if (!buff) {
@@ -168,7 +170,7 @@ static char *inspect_lazy(Parser *p, int indent) {
     return NULL;
   }
 
-  snprintf(buff, size,templ, ind);
+  snprintf(buff, size, templ, ind);
   free(ind);
 
   return buff;
@@ -177,6 +179,32 @@ static char *inspect_lazy(Parser *p, int indent) {
 char *inspect_parser(Parser *p, int indent) {
   // TODO: could crash if recursive combinators are used
   // we don't detect cycles yet.
+
+  lua_State *L = p->L;
+  if (L && p->lua_ref != LUA_NOREF) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, p->lua_ref);
+
+    lua_getuservalue(L, -1);
+    lua_getfield(L, -1, "inspect");
+    if (!lua_isnil(L, -1)) {
+      const char *inspect_str = lua_tostring(L, -1);
+      char *ind = make_indent(indent);
+
+      int size = snprintf(NULL, 0, "%s%s()", ind, inspect_str) + 1;
+      char *buff = malloc(size);
+      if (!buff) {
+        free(ind);
+      }
+
+      snprintf(buff, size, "%s%s()", ind, inspect_str);
+      free(ind);
+
+      lua_pop(L, 3); // inspect, uservalue, userdata
+      return buff;
+    }
+    lua_pop(L, 3);
+  }
+
   switch (p->kind) {
   case P_LITERAL:
     return inspect_literal(p, indent);
