@@ -34,6 +34,7 @@ static Parser *parser_new(ParserKind k, parse_fn_t parse, destroy_fn_t destroy,
   p->data = data;
   p->refcount = 1;
   p->L = L;
+  p->lua_ref = LUA_NOREF;
   return p;
 }
 
@@ -49,6 +50,9 @@ static void parser_unref(Parser *p) {
 
   p->refcount--;
   if (p->refcount <= 0) {
+    luaL_unref(p->L, LUA_REGISTRYINDEX, p->lua_ref);
+    p->lua_ref = LUA_NOREF;
+
     if (p->destroy) {
       p->destroy(p);
     }
@@ -640,6 +644,9 @@ static void push_parser_ud(lua_State *L, Parser *p) {
   // for custom lua user values
   lua_newtable(L);
   lua_setuservalue(L, -2);
+
+  lua_pushvalue(L, -1);
+  p->lua_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
 /* ---------------------------

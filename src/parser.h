@@ -47,6 +47,7 @@ struct Parser {
   int refcount;
   // store pointer to lua_State used to register callbacks (not owned)
   lua_State *L;
+  int lua_ref;
 };
 
 static Parser *parser_new(ParserKind k, parse_fn_t parse, destroy_fn_t destroy,
