@@ -80,7 +80,9 @@ START_TEST(test_simple_xml) {
 }
 END_TEST
 
-Suite *parser_suite(void) {
+START_TEST(test_inspect) { run_lua_test("./test_inspect.lua"); } END_TEST
+
+    Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
 
@@ -95,6 +97,7 @@ Suite *parser_suite(void) {
   tcase_add_test(tc, test_pred);
   tcase_add_test(tc, test_whitepace);
   tcase_add_test(tc, test_simple_xml);
+  tcase_add_test(tc, test_inspect);
 
   suite_add_tcase(s, tc);
   return s;
