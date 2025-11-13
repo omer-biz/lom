@@ -6,25 +6,25 @@ local function is_whitespace(str)
     return str:match("^%s*$") ~= nil
 end
 
-local function set_inspect(parser, inspect_str)
+function M.set_inspect(parser, inspect_str)
     parser.inspect = inspect_str
     return parser
 end
 
 function M.whitespace_char()
-    return set_inspect(M.any_char():pred(is_whitespace), "whitespace_char")
+    return M.set_inspect(M.any_char():pred(is_whitespace), "whitespace_char")
 end
 
 function M.space1()
-    return set_inspect(M.whitespace_char():one_or_more(), "space1")
+    return M.set_inspect(M.whitespace_char():one_or_more(), "space1")
 end
 
 function M.space0()
-    return set_inspect(M.whitespace_char():zero_or_more(), "space0")
+    return M.set_inspect(M.whitespace_char():zero_or_more(), "space0")
 end
 
 function M.quoted_string()
-    return set_inspect(
+    return M.set_inspect(
         M.space0():drop_for(
             M.literal('"'):drop_for(
                 M.any_char():pred(
@@ -43,7 +43,7 @@ function M.quoted_string()
 end
 
 function M.identifier()
-    return set_inspect(
+    return M.set_inspect(
         M.any_char():pred(
             function(ch)
                 return ch:match("[%a_]") ~= nil
