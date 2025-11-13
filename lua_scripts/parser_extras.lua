@@ -2,6 +2,8 @@ local M = ...
 
 M.utils = {}
 
+---@param str string checkes wheatear str is a whitespace chararcter
+---@return boolean
 local function is_whitespace(str)
     return str:match("^%s*$") ~= nil
 end
