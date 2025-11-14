@@ -69,12 +69,9 @@ function M.identifier()
 end
 
 function M.pure(id)
-    local p = {}
-    setmetatable(p, M)
-
-    function p:parse(input)
+    local p = M.new(function(input)
         return id, input
-    end
+    end)
 
     return M.set_inspect(p, string.format("pure(%q)", id))
 end
