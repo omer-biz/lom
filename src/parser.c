@@ -895,23 +895,22 @@ static const luaL_Reg parser_methods[] = {
     {NULL, NULL}};
 
 static int parser_index(lua_State *L) {
-  luaL_getmetatable(L, "Parser");
-
-  // search through the C functions
-  lua_getfield(L, -1, "__methods");
-  lua_pushvalue(L, 2);
-  lua_rawget(L, -2);
+  lua_getuservalue(L, 1); // uservalue table
+  lua_pushvalue(L, 2);    // key
+  lua_gettable(L, -2);
 
   if (!lua_isnil(L, -1)) {
-    return 1; // found a C function
+    return 1;
   }
 
   lua_pop(L, 2);
 
-  // check user defined lua values
-  lua_getuservalue(L, 1);
+  // fallback to C methods
+  luaL_getmetatable(L, "Parser");
+  lua_getfield(L, -1, "__methods");
   lua_pushvalue(L, 2);
-  lua_gettable(L, -2);
+  lua_rawget(L, -2);
+
   return 1;
 }
 
