@@ -195,13 +195,13 @@ char *inspect_parser(Parser *p, int indent) {
       const char *inspect_str = lua_tostring(L, -1);
       char *ind = make_indent(indent);
 
-      int size = snprintf(NULL, 0, "%s%s()", ind, inspect_str) + 1;
+      int size = snprintf(NULL, 0, "%s%s", ind, inspect_str) + 1;
       char *buff = malloc(size);
       if (!buff) {
         free(ind);
       }
 
-      snprintf(buff, size, "%s%s()", ind, inspect_str);
+      snprintf(buff, size, "%s%s", ind, inspect_str);
       free(ind);
 
       lua_pop(L, 3); // inspect, uservalue, userdata
