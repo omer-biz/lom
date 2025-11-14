@@ -37,6 +37,7 @@ typedef enum {
   P_DROP_FOR,
   P_PAIR,
   P_LAZY,
+  P_CUSTOM
 } ParserKind;
 
 struct Parser {
@@ -201,6 +202,14 @@ typedef struct {
 static ParseResult lazy_parse(Parser *p, const char *input);
 static void lazy_destroy(Parser *p);
 static Parser *make_lazy(lua_State *L, int func_ref);
+
+typedef struct {
+  int func_ref;
+} CustomData;
+
+static ParseResult custom_parse(Parser *p, const char *input);
+static void custom_destroy(Parser *p);
+static Parser *make_custom(lua_State *L, int func_ref);
 
 /* ---------------------------
    Lua userdata helpers

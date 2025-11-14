@@ -622,6 +622,48 @@ static Parser *make_lazy(lua_State *L, int func_ref) {
   return parser_new(P_LAZY, lazy_parse, lazy_destroy, d, L);
 }
 
+static ParseResult custom_parse(Parser *p, const char *input) {
+  CustomData *d = (CustomData *)p->data;
+  lua_State *L = p->L;
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, d->func_ref);
+  lua_pushstring(L, input);
+  if (lua_pcall(L, 1, 2, 0) != LUA_OK) {
+    const char *err = lua_tostring(L, -1);
+    fprintf(stderr, "unable to create a new parser: %s\n",
+            err ? err : "(unknown)");
+    lua_pop(L, 1);
+
+    return parse_err(input);
+  }
+
+  const char *out = lua_tostring(L, -2);
+  const char *rest = lua_tostring(L, -1);
+  lua_pop(L, 1);
+
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  return parse_ok(rest, ref);
+}
+
+static Parser *make_custom(lua_State *L, int func_ref) {
+  CustomData *d = (CustomData *)malloc(sizeof(CustomData));
+  d->func_ref = func_ref;
+
+  return parser_new(P_CUSTOM, custom_parse, custom_destroy, d, L);
+}
+
+static void custom_destroy(Parser *p) {
+  CustomData *d = (CustomData *)p->data;
+
+  if (d) {
+    if (d->func_ref != LUA_NOREF) {
+      luaL_unref(p->L, LUA_REGISTRYINDEX, d->func_ref);
+    }
+    free(d);
+  }
+}
+
 /* ---------------------------
    Lua userdata helpers
    --------------------------- */
@@ -922,6 +964,18 @@ static int parser_newindex(lua_State *L) {
   return 0;
 }
 
+static int l_parser_custom(lua_State *L) {
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+
+  lua_pushvalue(L, 1);
+  int func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  Parser *p = make_custom(L, func_ref);
+  push_parser_ud(L, p);
+
+  return 1;
+}
+
 int luaopen_parser(lua_State *L) {
   // create Parser metatable
   luaL_newmetatable(L, "Parser");
@@ -959,6 +1013,8 @@ int luaopen_parser(lua_State *L) {
   lua_setfield(L, -2, "lazy");
   lua_pushcfunction(L, l_parser_inspect);
   lua_setfield(L, -2, "inspect");
+  lua_pushcfunction(L, l_parser_custom);
+  lua_setfield(L, -2, "new");
 
   size_t parser_extras_lua_len = strlen(PARSER_EXTRAS_LUA);
 
