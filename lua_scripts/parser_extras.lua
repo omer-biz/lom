@@ -68,6 +68,16 @@ function M.identifier()
     )
 end
 
+function M.pure(id)
+    local p = {}
+    setmetatable(p, M)
+
+    function p:parse(input)
+        return id, input
+    end
+
+    return M.set_inspect(p, string.format("pure(%q)", id))
+end
 function M.utils.print(t, indent)
     indent = indent or 0
     local spacing = string.rep(" ", indent)

@@ -101,6 +101,18 @@ function M.quoted_string() end
 ---@return Parser
 function M.identifier() end
 
+---The identity function, lifts normal strings to Parser world.
+---
+---**Implemented in:** Lua
+---**Example:**
+---```lua
+--- local p_hello = parser.pure("hello")
+--- print(p_hello:parse("Hello, World!")) -- → "hello", "Hello, World!"
+---```
+---@param id string
+---@return Parser
+function M.pure(id) end
+
 ---@class Parser
 ---@field inspect string A textual description of the parser.
 M.Parser = {}

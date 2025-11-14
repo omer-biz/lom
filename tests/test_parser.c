@@ -80,9 +80,13 @@ START_TEST(test_simple_xml) {
 }
 END_TEST
 
-START_TEST(test_inspect) { run_lua_test("./test_inspect.lua"); } END_TEST
+START_TEST(test_identity) { run_lua_test("./test_identity.lua"); }
+END_TEST
 
-    Suite *parser_suite(void) {
+START_TEST(test_inspect) { run_lua_test("./test_inspect.lua"); }
+END_TEST
+
+Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
   TCase *tc = tcase_create("Core");
 
@@ -98,6 +102,7 @@ START_TEST(test_inspect) { run_lua_test("./test_inspect.lua"); } END_TEST
   tcase_add_test(tc, test_whitepace);
   tcase_add_test(tc, test_simple_xml);
   tcase_add_test(tc, test_inspect);
+  tcase_add_test(tc, test_identity);
 
   suite_add_tcase(s, tc);
   return s;
