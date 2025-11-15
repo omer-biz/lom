@@ -5,9 +5,11 @@ local M = {}
 --- Parses any single character.
 ---
 --- **Implemented in:** C
---- @example
+--- **example**
+---```lua
 --- local p = parser.any_char()
 --- print(p:parse("abc"))  -- → "a", "bc"
+---```
 ---@return Parser
 function M.any_char() end
 
@@ -39,8 +41,9 @@ function M.literal(s) end
 --- local p = parser.literal("hi")
 --- print(parser.inspect(p))  -- → "literal('hi')"
 ---@param parser Parser
+---@param indent? integer
 ---@return string
-function M.inspect(parser) end
+function M.inspect(parser, indent) end
 
 --- Sets a custom `inspect` description for a parser.
 --- This description is used when calling `inspect()`.
@@ -153,11 +156,13 @@ function M.Parser:zero_or_more() end
 --- returning the result of `taken`.
 ---
 --- **Implemented in:** C
---- @example
+--- **example:**
+---```lua
 --- local a = parser.literal("a")
 --- local b = parser.literal("b")
 --- local p = a:drop_for(b)
 --- print(p:parse("ab"))  -- → "b", ""
+---```
 ---@param self Parser
 ---@param taken Parser
 ---@return Parser
@@ -249,7 +254,7 @@ function M.Parser:pair(p) end
 --- print(p:parse("hi there"))  -- → "hi", " there"
 ---@param self Parser
 ---@param input string
----@return [table | string | nil, string] The parsed result (or `nil`) and the remaining input.
+---@return table | string | nil, string The parsed result (or `nil`) and the remaining input.
 function M.Parser:parse(input) end
 
 -- Utility functions
