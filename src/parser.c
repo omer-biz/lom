@@ -1271,19 +1271,5 @@ int luaopen_parser(lua_State *L) {
   lua_pushcfunction(L, l_parser_custom);
   lua_setfield(L, -2, "new");
 
-  size_t parser_extras_lua_len = strlen(PARSER_EXTRAS_LUA);
-
-  if (luaL_loadbuffer(L, PARSER_EXTRAS_LUA, parser_extras_lua_len,
-                      "parser_extras.lua") != LUA_OK) {
-    fprintf(stderr, "Error loading extras: %s\n", lua_tostring(L, -1));
-    return lua_error(L);
-  }
-
-  lua_pushvalue(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
-    fprintf(stderr, "Error running extras: %s\n", lua_tostring(L, -1));
-    return lua_error(L); // propagate runtime error
-  }
-
   return 1;
 }
