@@ -113,6 +113,17 @@ function M.identifier() end
 ---@return Parser
 function M.pure(id) end
 
+--- Consumes input until `mark` and returns everyting upto and including it.
+---
+---**Example:**
+---```lua
+--- local consumer = parser.consume_until("end")
+--- print(consumer:parse("The beginning of the end is neigh")) -- → "The beginning of the end", " end is neigh"
+---```
+---@param mark string needle
+---@return Parser
+function M.consume_until(mark) end
+
 ---@class Parser
 ---@field inspect string A textual description of the parser.
 M.Parser = {}

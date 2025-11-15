@@ -75,6 +75,24 @@ function M.pure(id)
 
     return M.set_inspect(p, string.format("pure(%q)", id))
 end
+
+function M.consume_until(mark)
+    local p = M.new(function(input)
+        local start_pos, end_pos = input:find(mark, 1, true)
+        if not start_pos then
+            return nil, input
+        end
+
+        local out = input:sub(1, end_pos)
+        local rest = input:sub(end_pos + 1, input:len())
+
+        return out, rest
+    end)
+
+    return M.set_inspect(p, string.format("consume_until(%q)", mark))
+end
+
+
 function M.utils.print(t, indent)
     indent = indent or 0
     local spacing = string.rep(" ", indent)
