@@ -252,6 +252,30 @@ static int l_parser_zero_or_more(lua_State *L);
 /* p:parse(input) -> returns output (string or nil) , rest (string) */
 static int l_parser_parse(lua_State *L);
 
+static char *inspect_literal(Parser *p, int indent);
+static char *inspect_any_char(Parser *p, int indent);
+
+static char *inspect_binary(const char *name, Parser *left, Parser *right,
+                            int indent);
+
+static char *inspect_pair(Parser *p, int indent);
+static char *inspect_take_after(Parser *p, int indent);
+static char *inspect_drop_for(Parser *p, int indent);
+static char *inspect_or_else(Parser *p, int indnet);
+
+static char *inspect_one_or_more(Parser *p, int indent);
+static char *inspect_zero_or_more(Parser *p, int indent);
+
+static char *inspect_unary_with_func(const char *name, Parser *inner,
+                                     int indent);
+static char *inspect_pred(Parser *p, int indent);
+static char *inspect_map(Parser *p, int indent);
+static char *inspect_and_then(Parser *p, int indent);
+
+static char *inspect_lazy(Parser *p, int indent);
+
+static char *inspect_parser(Parser *p, int ident);
+
 int luaopen_parser(lua_State *L);
 
 #ifndef PARSER_EXTRAS_LUA
