@@ -25,7 +25,7 @@ void test_teardown(void) { lua_close(L); }
 
 static void run_lua_test(const char *filename) {
   char fullpath[256];
-  snprintf(fullpath, sizeof(fullpath), "./lua_scripts/%s", filename);
+  snprintf(fullpath, sizeof(fullpath), "./tests/lua/%s", filename);
 
   if (luaL_dofile(L, fullpath) != LUA_OK) {
     ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
