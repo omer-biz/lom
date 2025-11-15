@@ -23,7 +23,7 @@ target_link_libraries(lom PRIVATE ${LUA_LIBRARIES})
 target_include_directories(lom PRIVATE ${LUA_INCLUDE_DIR})
 
 
-set(LUA_PARSER_EXTRAS "${CMAKE_SOURCE_DIR}/lua_scripts/parser_extras.lua")
+set(LUA_PARSER_EXTRAS "${CMAKE_SOURCE_DIR}/lua/parser_extras.lua")
 
 file(READ "${LUA_PARSER_EXTRAS}" LUA_PARSER_EXTRAS_SCRIPT)
 string(REPLACE "\\" "\\\\" LUA_PARSER_EXTRAS_SCRIPT "${LUA_PARSER_EXTRAS_SCRIPT}")
