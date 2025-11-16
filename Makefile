@@ -1,7 +1,7 @@
 BUILD_DIR   := build
 DIST_DIR    := dist
 CMAKE       := cmake
-CTEST       := ctest
+BUSTED 	 	:=busted
 PREFIX      ?= /usr/local
 DESTDIR     ?=
 
@@ -25,8 +25,9 @@ install: build
 	$(CMAKE) --install $(BUILD_DIR) --prefix $(PREFIX) $(if $(DESTDIR),--destdir $(DESTDIR))
 
 test: dist
-	LUA_PATH="$(PWD)/$(SHARE)/?.lua;$(PWD)/$(SHARE)/?/init.lua;;" \
-	LUA_CPATH="$(PWD)/$(LIB)/?.so;;" \
+	LUA_PATH="$(DIST_DIR)/share/lua/5.4/?.lua;dist/share/lua/5.4/?/init.lua;;" \
+	LUA_CPATH="$(DIST_DIR)/lib/lua/5.4/?.so;;" \
+	$(BUSTED) tests/
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR)
