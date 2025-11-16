@@ -276,7 +276,7 @@ static char *inspect_lazy(Parser *p, int indent);
 
 static char *inspect_parser(Parser *p, int ident);
 
-int luaopen_parser(lua_State *L);
+int luaopen_parser_core(lua_State *L);
 
 #ifndef PARSER_EXTRAS_LUA
 #define PARSER_EXTRAS_LUA ""

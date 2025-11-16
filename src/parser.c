@@ -1231,7 +1231,7 @@ static int l_parser_custom(lua_State *L) {
   return 1;
 }
 
-int luaopen_parser(lua_State *L) {
+int luaopen_parser_core(lua_State *L) {
   // create Parser metatable
   luaL_newmetatable(L, "Parser");
 

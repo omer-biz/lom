@@ -1,6 +1,6 @@
-local M = ...
+local P = require("parser.core")
 
-M.utils = {}
+local M = {}
 
 ---@param str string checkes wheatear str is a whitespace chararcter
 ---@return boolean
@@ -14,7 +14,7 @@ function M.set_inspect(parser, inspect_str)
 end
 
 function M.whitespace_char()
-    return M.set_inspect(M.any_char():pred(is_whitespace), "whitespace_char")
+    return M.set_inspect(P.any_char():pred(is_whitespace), "whitespace_char")
 end
 
 function M.space1()
@@ -28,8 +28,8 @@ end
 function M.quoted_string()
     return M.set_inspect(
         M.space0():drop_for(
-            M.literal('"'):drop_for(
-                M.any_char():pred(
+            P.literal('"'):drop_for(
+                P.any_char():pred(
                     function(char)
                         return char ~= '"'
                     end
@@ -46,13 +46,13 @@ end
 
 function M.identifier()
     return M.set_inspect(
-        M.any_char():pred(
+        P.any_char():pred(
             function(ch)
                 return ch:match("[%a_]") ~= nil
             end
         ):and_then(
             function(first)
-                return M.any_char():pred(
+                return P.any_char():pred(
                     function(ch)
                         return ch:match("[%w_%-]") ~= nil
                     end
@@ -69,7 +69,7 @@ function M.identifier()
 end
 
 function M.pure(id)
-    local p = M.new(function(input)
+    local p = P.new(function(input)
         return id, input
     end)
 
@@ -77,7 +77,7 @@ function M.pure(id)
 end
 
 function M.consume_until(mark)
-    local p = M.new(function(input)
+    local p = P.new(function(input)
         local start_pos, end_pos = input:find(mark, 1, true)
         if not start_pos then
             return nil, input
@@ -92,6 +92,7 @@ function M.consume_until(mark)
     return M.set_inspect(p, string.format("consume_until(%q)", mark))
 end
 
+M.utils = {}
 
 function M.utils.print(t, indent)
     indent = indent or 0
