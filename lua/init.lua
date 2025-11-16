@@ -1,6 +1,10 @@
-local P = require("parser.core")
+local core = require("parser.core")
 
 local M = {}
+for k, v in pairs(core) do
+    M[k] = v
+end
+
 
 ---@param str string checkes wheatear str is a whitespace chararcter
 ---@return boolean
@@ -14,7 +18,7 @@ function M.set_inspect(parser, inspect_str)
 end
 
 function M.whitespace_char()
-    return M.set_inspect(P.any_char():pred(is_whitespace), "whitespace_char")
+    return M.set_inspect(core.any_char():pred(is_whitespace), "whitespace_char")
 end
 
 function M.space1()
@@ -28,8 +32,8 @@ end
 function M.quoted_string()
     return M.set_inspect(
         M.space0():drop_for(
-            P.literal('"'):drop_for(
-                P.any_char():pred(
+            core.literal('"'):drop_for(
+                core.any_char():pred(
                     function(char)
                         return char ~= '"'
                     end
@@ -46,13 +50,13 @@ end
 
 function M.identifier()
     return M.set_inspect(
-        P.any_char():pred(
+        core.any_char():pred(
             function(ch)
                 return ch:match("[%a_]") ~= nil
             end
         ):and_then(
             function(first)
-                return P.any_char():pred(
+                return core.any_char():pred(
                     function(ch)
                         return ch:match("[%w_%-]") ~= nil
                     end
@@ -69,7 +73,7 @@ function M.identifier()
 end
 
 function M.pure(id)
-    local p = P.new(function(input)
+    local p = core.new(function(input)
         return id, input
     end)
 
@@ -77,7 +81,7 @@ function M.pure(id)
 end
 
 function M.consume_until(mark)
-    local p = P.new(function(input)
+    local p = core.new(function(input)
         local start_pos, end_pos = input:find(mark, 1, true)
         if not start_pos then
             return nil, input
