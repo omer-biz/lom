@@ -22,6 +22,6 @@ install(TARGETS core
 )
 
 install(DIRECTORY lua/
-    DESTINATION share/lua/${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}/parser
+    DESTINATION share/lua/${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}/
     FILES_MATCHING PATTERN "*.lua"
 )
