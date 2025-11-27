@@ -1,14 +1,22 @@
----@meta effect
-
 local M = {}
 
 ---@class Effect
-M.Effect = {}
+---@field kind EffectType
+
+---@alias EffectType
+---| "error"
+---| "network"
+---| "file"
 
 --- Used to report error in an environment where there is no console output
 ---@param msg string error message
 ---@return Effect
-function M.error(msg) end
+function M.error(msg)
+  return {
+    kind = "error",
+    data = { message = msg }
+  }
+end
 
 --@alias Mode
 --| "w" # truncate the file if it exists, or create it
@@ -32,7 +40,12 @@ local Mode = {
 ---@param content string # content to be written to the file
 ---@param opts FileEffectOpts # options controlling how the file is written
 ---@return Effect
-function M.file(content, opts) end
+function M.file(content, opts)
+  return {
+    kind = "file",
+    data = { content = content, opts = opts }
+  }
+end
 
 ---Network modes determine *what kind of outbound network action* this effect represents.
 ---@class NetworkMode
@@ -57,6 +70,11 @@ local NetworkMode = {
 ---@param content string|nil    # content to be sent
 ---@param opts NetworkEffectOpts
 ---@return Effect
-function M.network(content, opts) end
+function M.network(content, opts)
+  return {
+    kind = "network",
+    data = { content = content, opts, opts }
+  }
+end
 
 return M
