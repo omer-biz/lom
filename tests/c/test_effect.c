@@ -14,14 +14,28 @@ static lua_State *L;
 
 void test_setup(void) {
   L = luaL_newstate();
-
   luaL_openlibs(L);
+
+  // update `package.path` to include `LUA_SRC_DIR`
+  lua_getglobal(L, "package");
+  lua_getfield(L, -1, "path");
+  const char *current_path = lua_tostring(L, -1);
+
+  const char *extra_path = LUA_SRC_DIR "/?.lua";
+
+  char new_path[2048];
+  snprintf(new_path, sizeof(new_path), "%s;%s", current_path, extra_path);
+
+  lua_pop(L, 1);
+
+  lua_pushstring(L, new_path);
+  lua_setfield(L, -2, "path");
+  lua_pop(L, 1);
 }
 
 void test_teardown(void) { lua_close(L); }
 
-START_TEST(test_error) {
-}
+START_TEST(test_error) {}
 END_TEST
 
 START_TEST(test_file) {}
