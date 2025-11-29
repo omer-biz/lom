@@ -1,4 +1,4 @@
-#include "../../src/effect.h"
+#include "effect.h"
 
 #include <check.h>
 #include <lauxlib.h>

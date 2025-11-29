@@ -1,9 +1,9 @@
 find_package(Check REQUIRED)
 find_package(Lua REQUIRED)
 
-add_executable(test_effect test_effect.c)
+add_executable(test_effect test_effect.c ${CMAKE_SOURCE_DIR}/src/effect.c)
 target_link_libraries(test_effect PRIVATE core check m ${LUA_LIBRARIES})
-target_include_directories(test_effect PRIVATE ${LUA_INCLUDE_DIR})
+target_include_directories(test_effect PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(test_effect PRIVATE LUA_SRC_DIR="${CMAKE_SOURCE_DIR}/lua")
 
 add_test(NAME EffectTests COMMAND test_effect)
