@@ -27,7 +27,7 @@ install: build
 test: dist
 	LUA_PATH="$(DIST_DIR)/share/lua/5.4/?.lua;dist/share/lua/5.4/?/init.lua;;" \
 	LUA_CPATH="$(DIST_DIR)/lib/lua/5.4/?.so;;" \
-	$(BUSTED) tests/
+	$(BUSTED) tests/lua
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR)
