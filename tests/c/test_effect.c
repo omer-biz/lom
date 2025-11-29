@@ -35,7 +35,22 @@ void test_setup(void) {
 
 void test_teardown(void) { lua_close(L); }
 
-START_TEST(test_error) {}
+void run_lua(lua_State *L, const char *src) {
+  if (luaL_loadstring(L, src) || lua_pcall(L, 0, 1, 0)) {
+    ck_abort_msg("Lua error: %s", lua_tostring(L, -1));
+  }
+}
+
+START_TEST(test_error) {
+  const char *lua_src = "local effect = require('effect')"
+                        "return effect.error('Error returned from lua effect')";
+
+  run_lua(L, lua_src);
+
+  Effect e = parse_effect(L, -1);
+  ck_assert_int_eq(e.kind, EFFECT_ERROR);
+  ck_assert_str_eq(e.as.error.message, "Error returned from lua effect");
+}
 END_TEST
 
 START_TEST(test_file) {}
