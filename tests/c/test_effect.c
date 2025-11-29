@@ -42,7 +42,7 @@ void run_lua(lua_State *L, const char *src) {
 }
 
 START_TEST(test_error) {
-  const char *lua_src = "local effect = require('effect')"
+  const char *lua_src = "local effect = require 'effect'"
                         "return effect.error('Error returned from lua effect')";
 
   run_lua(L, lua_src);
@@ -53,7 +53,19 @@ START_TEST(test_error) {
 }
 END_TEST
 
-START_TEST(test_file) {}
+START_TEST(test_file) {
+  const char *lua_src =
+      "local effect = require 'effect'"
+      "return effect.file('hello world', { path = 'out.txt', mode = 'a' })";
+
+  run_lua(L, lua_src);
+
+  Effect e = parse_effect(L, -1);
+  ck_assert_int_eq(e.kind, EFFECT_FILE);
+  ck_assert_str_eq(e.as.file.content, "hello world");
+  ck_assert_str_eq(e.as.file.path, "out.txt");
+  ck_assert_str_eq(e.as.file.mode, "a");
+}
 END_TEST
 
 START_TEST(test_network) {}
