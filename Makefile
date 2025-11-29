@@ -24,10 +24,16 @@ dist: build
 install: build
 	$(CMAKE) --install $(BUILD_DIR) --prefix $(PREFIX) $(if $(DESTDIR),--destdir $(DESTDIR))
 
-test: dist
+test: luatest ctest
+
+luatest: dist
 	LUA_PATH="$(DIST_DIR)/share/lua/5.4/?.lua;dist/share/lua/5.4/?/init.lua;;" \
 	LUA_CPATH="$(DIST_DIR)/lib/lua/5.4/?.so;;" \
 	$(BUSTED) tests/lua
+
+ctest:
+	cd ${BUILD_DIR} && ctest --output-on-failure --verbose
+
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR)

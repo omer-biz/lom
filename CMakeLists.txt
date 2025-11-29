@@ -3,6 +3,9 @@ option(CMAKE_EXPORT_COMPILE_COMMANDS "Create compile_commands.json" ON)
 
 project(parser LANGUAGES C)
 
+enable_testing()
+add_subdirectory(tests/c)
+
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
