@@ -68,7 +68,23 @@ START_TEST(test_file) {
 }
 END_TEST
 
-START_TEST(test_network) {}
+START_TEST(test_network) {
+  const char *lua_src = "local effect = require 'effect'"
+                        "return effect.network('payload', {"
+                        "  url = 'https://example.com/api',"
+                        "  mode = 'post',"
+                        "  timeout = 5000"
+                        "})";
+
+  run_lua(L, lua_src);
+
+  Effect e = parse_effect(L, -1);
+  ck_assert_int_eq(e.kind, EFFECT_NETWORK);
+  ck_assert_str_eq(e.as.network.content, "payload");
+  ck_assert_str_eq(e.as.network.url, "https://example.com/api");
+  ck_assert_str_eq(e.as.network.mode, "post");
+  ck_assert_int_eq(e.as.network.timeout, 5000);
+}
 END_TEST
 
 Suite *parser_suite(void) {
