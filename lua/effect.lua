@@ -73,7 +73,7 @@ local NetworkMode = {
 function M.network(content, opts)
   return {
     kind = "network",
-    data = { content = content, opts, opts }
+    data = { content = content, opts = opts }
   }
 end
 
