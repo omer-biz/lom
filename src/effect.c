@@ -69,6 +69,10 @@ Effect *parse_effect(lua_State *L, int index) {
     out->as.network.timeout = get_field_int(L, opts_index, "timeout", -1);
 
     lua_pop(L, 1);
+  } else {
+  lua_pop(L, 1);
+    free(out);
+    return NULL;
   }
 
   lua_pop(L, 1);
