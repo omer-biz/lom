@@ -12,6 +12,7 @@ local M = {}
 ---@param msg string error message
 ---@return Effect
 function M.error(msg)
+  msg = msg or ""
   return {
     kind = "error",
     data = { message = msg }
@@ -41,6 +42,8 @@ local Mode = {
 ---@param opts FileEffectOpts # options controlling how the file is written
 ---@return Effect
 function M.file(content, opts)
+  content = content or ""
+  opts = opts or {}
   return {
     kind = "file",
     data = { content = content, opts = opts }
@@ -71,6 +74,8 @@ local NetworkMode = {
 ---@param opts NetworkEffectOpts
 ---@return Effect
 function M.network(content, opts)
+  content = content or ""
+  opts = opts or {}
   return {
     kind = "network",
     data = { content = content, opts = opts }
