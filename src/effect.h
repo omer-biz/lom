@@ -40,6 +40,6 @@ typedef struct {
 #endif
 
 
-Effect parse_effect(lua_State *L, int index);
+Effect *parse_effect(lua_State *L, int index);
 
 #endif
